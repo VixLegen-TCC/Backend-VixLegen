@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.CadastroPublicoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.UsuarioAtualizacaoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.UsuarioRequest;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Response.UsuarioResponse;
@@ -9,6 +10,7 @@ import br.com.VixLegen.ProjetoVixLegen10.Model.Categoria;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Usuario;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.CategoriaRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.UsuarioRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,55 +22,84 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final String categoriaPublicaPadrao;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
             CategoriaRepository categoriaRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            @Value("${cadastro.categoria-padrao:Advogado Júnior}") String categoriaPublicaPadrao) {
 
         this.usuarioRepository = usuarioRepository;
         this.categoriaRepository = categoriaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.categoriaPublicaPadrao = categoriaPublicaPadrao;
     }
 
     public UsuarioResponse cadastrar(UsuarioRequest request) {
 
-        if (usuarioRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new RegraNegocioException("E-mail já cadastrado");
-        }
-
-        if (usuarioRepository.existsByCpf(request.getCpf())) {
-            throw new RegraNegocioException("CPF já cadastrado");
-        }
+        validarDuplicidade(request.getEmail(), request.getCpf());
 
         Categoria categoria = buscarCategoria(
                 request.getCodigoCategoria()
         );
 
-        Usuario usuario = new Usuario();
-
-        usuario.setPrimeiroNome(request.getPrimeiroNome());
-        usuario.setUltimoNome(request.getUltimoNome());
-        usuario.setEmail(request.getEmail());
-        usuario.setSenhaHash(
-                passwordEncoder.encode(request.getSenha())
+        Usuario usuario = montarUsuario(
+                request.getPrimeiroNome(),
+                request.getUltimoNome(),
+                request.getEmail(),
+                request.getSenha(),
+                request.getTelefone(),
+                request.getCpf(),
+                request.getRg(),
+                request.getEmpresa(),
+                request.getNumeroOAB(),
+                request.getDataNascimento(),
+                request.getEstado(),
+                request.getCidade(),
+                request.getCep(),
+                categoria
         );
-        usuario.setTelefone(request.getTelefone());
-        usuario.setCpf(request.getCpf());
-        usuario.setRg(request.getRg());
-        usuario.setEmpresa(request.getEmpresa());
-        usuario.setNumeroOAB(request.getNumeroOAB());
-        usuario.setDataNascimento(request.getDataNascimento());
-        usuario.setEstado(request.getEstado());
-        usuario.setCidade(request.getCidade());
-        usuario.setCep(request.getCep());
-        usuario.setAtivo(true);
-        usuario.setCategoria(categoria);
 
-        Usuario usuarioSalvo =
-                usuarioRepository.save(usuario);
+        return converterParaResponse(
+                usuarioRepository.save(usuario)
+        );
+    }
 
-        return converterParaResponse(usuarioSalvo);
+    public UsuarioResponse cadastrarPublico(
+            CadastroPublicoRequest request) {
+
+        validarDuplicidade(request.getEmail(), request.getCpf());
+
+        Categoria categoria = categoriaRepository
+                .findByDescricaoIgnoreCase(categoriaPublicaPadrao)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Categoria padrão de cadastro não encontrada: "
+                                        + categoriaPublicaPadrao
+                        )
+                );
+
+        Usuario usuario = montarUsuario(
+                request.getPrimeiroNome(),
+                request.getUltimoNome(),
+                request.getEmail(),
+                request.getSenha(),
+                request.getTelefone(),
+                request.getCpf(),
+                request.getRg(),
+                request.getEmpresa(),
+                request.getNumeroOAB(),
+                request.getDataNascimento(),
+                request.getEstado(),
+                request.getCidade(),
+                request.getCep(),
+                categoria
+        );
+
+        return converterParaResponse(
+                usuarioRepository.save(usuario)
+        );
     }
 
     public List<UsuarioResponse> listarTodos() {
@@ -248,6 +279,62 @@ public class UsuarioService {
                 .stream()
                 .map(this::converterParaResponse)
                 .toList();
+    }
+
+    private void validarDuplicidade(
+            String email,
+            String cpf) {
+
+        if (usuarioRepository.existsByEmailIgnoreCase(email)) {
+            throw new RegraNegocioException(
+                    "E-mail já cadastrado"
+            );
+        }
+
+        if (usuarioRepository.existsByCpf(cpf)) {
+            throw new RegraNegocioException(
+                    "CPF já cadastrado"
+            );
+        }
+    }
+
+    private Usuario montarUsuario(
+            String primeiroNome,
+            String ultimoNome,
+            String email,
+            String senha,
+            String telefone,
+            String cpf,
+            String rg,
+            String empresa,
+            String numeroOAB,
+            java.time.LocalDate dataNascimento,
+            String estado,
+            String cidade,
+            String cep,
+            Categoria categoria) {
+
+        Usuario usuario = new Usuario();
+
+        usuario.setPrimeiroNome(primeiroNome);
+        usuario.setUltimoNome(ultimoNome);
+        usuario.setEmail(email.trim());
+        usuario.setSenhaHash(
+                passwordEncoder.encode(senha)
+        );
+        usuario.setTelefone(telefone);
+        usuario.setCpf(cpf);
+        usuario.setRg(rg);
+        usuario.setEmpresa(empresa);
+        usuario.setNumeroOAB(numeroOAB);
+        usuario.setDataNascimento(dataNascimento);
+        usuario.setEstado(estado);
+        usuario.setCidade(cidade);
+        usuario.setCep(cep);
+        usuario.setAtivo(true);
+        usuario.setCategoria(categoria);
+
+        return usuario;
     }
 
     private Usuario buscarEntidadePorId(Long id) {
