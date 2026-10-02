@@ -1,7 +1,9 @@
 package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.AlterarPrazoRequest;
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.AlterarStatusTarefaRequest;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.AtribuirTarefaRequest;
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.TarefaRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Tarefa;
 import br.com.VixLegen.ProjetoVixLegen10.Service.TarefaService;
 import jakarta.validation.Valid;
@@ -22,32 +24,36 @@ public class TarefaController {
 
     @PostMapping
     public ResponseEntity<Tarefa> cadastrar(
-            @Valid @RequestBody Tarefa tarefa) {
+            @Valid @RequestBody TarefaRequest request) {
 
         return ResponseEntity.ok(
-                tarefaService.cadastrar(tarefa)
+                tarefaService.cadastrar(request)
         );
     }
 
     @GetMapping
     public ResponseEntity<List<Tarefa>> listarTodos() {
-        return ResponseEntity.ok(tarefaService.listarTodos());
+        return ResponseEntity.ok(
+                tarefaService.listarTodos()
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Tarefa> buscarPorId(
             @PathVariable Long id) {
 
-        return ResponseEntity.ok(tarefaService.buscarPorId(id));
+        return ResponseEntity.ok(
+                tarefaService.buscarPorId(id)
+        );
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Tarefa> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody Tarefa tarefa) {
+            @Valid @RequestBody TarefaRequest request) {
 
         return ResponseEntity.ok(
-                tarefaService.atualizar(id, tarefa)
+                tarefaService.atualizar(id, request)
         );
     }
 
@@ -59,11 +65,27 @@ public class TarefaController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Tarefa> alterarStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody
+            AlterarStatusTarefaRequest request) {
+
+        return ResponseEntity.ok(
+                tarefaService.alterarStatus(
+                        id,
+                        request.getStatus()
+                )
+        );
+    }
+
     @PatchMapping("/{id}/concluir")
     public ResponseEntity<Tarefa> concluir(
             @PathVariable Long id) {
 
-        return ResponseEntity.ok(tarefaService.concluir(id));
+        return ResponseEntity.ok(
+                tarefaService.concluir(id)
+        );
     }
 
     @PatchMapping("/{id}/atribuir")
