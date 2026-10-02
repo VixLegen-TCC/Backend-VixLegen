@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Model;
 
+import br.com.VixLegen.ProjetoVixLegen10.Enums.PrioridadeTarefa;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusTarefa;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -28,9 +29,15 @@ public class Tarefa {
     @NotBlank
     private String tipoTarefa;
 
+    @Column(length = 1000)
+    private String descricao;
+
     @Enumerated(EnumType.STRING)
     @NotNull
     private StatusTarefa status;
+
+    @Enumerated(EnumType.STRING)
+    private PrioridadeTarefa prioridade;
 
     @ManyToOne
     @JoinColumn(name = "processo_id", nullable = false)
@@ -39,4 +46,17 @@ public class Tarefa {
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuarioResponsavel;
+
+    @PrePersist
+    public void preencherPadroes() {
+        if (dataAtribuicao == null) {
+            dataAtribuicao = LocalDateTime.now();
+        }
+        if (status == null) {
+            status = StatusTarefa.PENDENTE;
+        }
+        if (prioridade == null) {
+            prioridade = PrioridadeTarefa.MEDIA;
+        }
+    }
 }
