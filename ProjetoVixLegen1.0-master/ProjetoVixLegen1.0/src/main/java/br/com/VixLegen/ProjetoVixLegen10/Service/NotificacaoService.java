@@ -47,8 +47,68 @@ public class NotificacaoService {
     }
 
     public List<Notificacao> listarPorUsuario(Long idUsuario) {
+
+        garantirNotificacoesIniciais(idUsuario);
+
         return notificacaoRepository
                 .findByUsuarioIdUsuarioOrderByDataEnvioDesc(idUsuario);
+    }
+
+    private void garantirNotificacoesIniciais(Long idUsuario) {
+
+        List<Notificacao> existentes =
+                notificacaoRepository
+                        .findByUsuarioIdUsuarioOrderByDataEnvioDesc(idUsuario);
+
+        if (!existentes.isEmpty()) {
+            return;
+        }
+
+        Usuario usuario = usuarioRepository
+                .findById(idUsuario)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Usuário não encontrado"
+                        )
+                );
+
+        notificacaoRepository.saveAll(List.of(
+                criarGenerica(
+                        "Sistema",
+                        "Bem-vindo ao VixLegen. Sua central de notificações está pronta para acompanhar avisos do escritório.",
+                        usuario
+                ),
+                criarGenerica(
+                        "Tarefa",
+                        "Revise suas tarefas e prazos pendentes para manter o quadro jurídico atualizado.",
+                        usuario
+                ),
+                criarGenerica(
+                        "Documento",
+                        "Lembrete: mantenha as minutas vinculadas ao processo correto antes de exportar ou compartilhar.",
+                        usuario
+                )
+        ));
+    }
+
+    private Notificacao criarGenerica(
+            String canal,
+            String mensagem,
+            Usuario usuario) {
+
+        Notificacao notificacao =
+                new Notificacao();
+
+        notificacao.setMensagem(mensagem);
+        notificacao.setDataEnvio(LocalDateTime.now());
+        notificacao.setCanal(canal);
+        notificacao.setStatus(
+                StatusNotificacao.ENVIADA
+        );
+        notificacao.setLida(false);
+        notificacao.setUsuario(usuario);
+
+        return notificacao;
     }
 
     public Notificacao buscarPorId(Long id) {
