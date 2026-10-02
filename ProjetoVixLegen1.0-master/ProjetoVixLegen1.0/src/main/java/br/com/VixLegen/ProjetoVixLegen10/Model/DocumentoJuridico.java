@@ -22,7 +22,11 @@ public class DocumentoJuridico {
     private String nome;
 
     @NotNull
-    private LocalDateTime dataCadastro;
+    private LocalDateTime dataCadastro = LocalDateTime.now();
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String conteudo;
 
     private String arquivo;
 
@@ -37,4 +41,11 @@ public class DocumentoJuridico {
     @ManyToOne
     @JoinColumn(name = "categoria_documento_id", nullable = false)
     private CategoriaDocumento categoriaDocumento;
+
+    @PrePersist
+    public void preencherDataCadastro() {
+        if (dataCadastro == null) {
+            dataCadastro = LocalDateTime.now();
+        }
+    }
 }
