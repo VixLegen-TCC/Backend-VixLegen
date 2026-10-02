@@ -1,9 +1,10 @@
 package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ClassificacaoProcessoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusProcesso;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ClassificacaoProcesso;
 import br.com.VixLegen.ProjetoVixLegen10.Service.ClassificacaoProcessoService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,14 +14,19 @@ import java.util.List;
 @RequestMapping("/classificacoes-processo")
 public class ClassificacaoProcessoController {
 
-    @Autowired
-    private ClassificacaoProcessoService service;
+    private final ClassificacaoProcessoService service;
+
+    public ClassificacaoProcessoController(
+            ClassificacaoProcessoService service) {
+        this.service = service;
+    }
 
     @PostMapping
     public ClassificacaoProcesso cadastrar(
-            @RequestBody ClassificacaoProcesso classificacao) {
+            @Valid @RequestBody
+            ClassificacaoProcessoRequest request) {
 
-        return service.cadastrar(classificacao);
+        return service.cadastrar(request);
     }
 
     @GetMapping
@@ -29,16 +35,19 @@ public class ClassificacaoProcessoController {
     }
 
     @GetMapping("/{id}")
-    public ClassificacaoProcesso buscarPorId(@PathVariable Long id) {
+    public ClassificacaoProcesso buscarPorId(
+            @PathVariable Long id) {
+
         return service.buscarPorId(id);
     }
 
     @PutMapping("/{id}")
     public ClassificacaoProcesso atualizar(
             @PathVariable Long id,
-            @RequestBody ClassificacaoProcesso classificacao) {
+            @Valid @RequestBody
+            ClassificacaoProcessoRequest request) {
 
-        return service.atualizar(id, classificacao);
+        return service.atualizar(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -47,12 +56,16 @@ public class ClassificacaoProcessoController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ClassificacaoProcesso> alterarStatus(
+    public ResponseEntity<ClassificacaoProcesso>
+    alterarStatus(
             @PathVariable Long id,
             @RequestBody StatusProcesso status) {
 
         return ResponseEntity.ok(
-                service.alterarStatus(id, status)
+                service.alterarStatus(
+                        id,
+                        status
+                )
         );
     }
 }
