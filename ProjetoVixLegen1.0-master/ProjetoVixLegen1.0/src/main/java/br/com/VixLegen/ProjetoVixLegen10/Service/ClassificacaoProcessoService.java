@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ClassificacaoProcessoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusProcesso;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ClassificacaoProcesso;
@@ -20,73 +21,88 @@ public class ClassificacaoProcessoService {
             ClassificacaoProcessoRepository classificacaoRepository,
             ProcessoJuridicoRepository processoRepository) {
 
-        this.classificacaoRepository = classificacaoRepository;
-        this.processoRepository = processoRepository;
+        this.classificacaoRepository =
+                classificacaoRepository;
+
+        this.processoRepository =
+                processoRepository;
     }
 
-    // CREATE
     public ClassificacaoProcesso cadastrar(
-            ClassificacaoProcesso classificacao) {
+            ClassificacaoProcessoRequest request) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                classificacao.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo =
+                buscarProcesso(
+                        request.getProcessoId()
+                );
+
+        ClassificacaoProcesso classificacao =
+                montarClassificacao(request);
 
         classificacao.setProcesso(processo);
 
-        return classificacaoRepository.save(classificacao);
+        return classificacaoRepository
+                .save(classificacao);
     }
 
-    // READ - todos
-    public List<ClassificacaoProcesso> listarTodos() {
+    public List<ClassificacaoProcesso>
+    listarTodos() {
+
         return classificacaoRepository.findAll();
     }
 
-    // READ - por ID
-    public ClassificacaoProcesso buscarPorId(Long id) {
+    public ClassificacaoProcesso buscarPorId(
+            Long id) {
 
-        return classificacaoRepository.findById(id)
+        return classificacaoRepository
+                .findById(id)
                 .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Classificação não encontrada"));
+                        new RecursoNaoEncontradoException(
+                                "Classificação não encontrada"
+                        ));
     }
 
-    // UPDATE
     public ClassificacaoProcesso atualizar(
             Long id,
-            ClassificacaoProcesso classificacao) {
+            ClassificacaoProcessoRequest request) {
 
         ClassificacaoProcesso existente =
-                classificacaoRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RecursoNaoEncontradoException(
-                                        "Classificação não encontrada"));
+                buscarPorId(id);
 
-        ProcessoJuridico processo = processoRepository.findById(
-                classificacao.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo =
+                buscarProcesso(
+                        request.getProcessoId()
+                );
 
-        existente.setStatus(classificacao.getStatus());
-        existente.setAreaDireito(classificacao.getAreaDireito());
-        existente.setTipoAcao(classificacao.getTipoAcao());
-        existente.setFaseProcessual(classificacao.getFaseProcessual());
-        existente.setDescricaoObjeto(classificacao.getDescricaoObjeto());
+        existente.setStatus(
+                request.getStatus()
+        );
+        existente.setAreaDireito(
+                request.getAreaDireito()
+        );
+        existente.setTipoAcao(
+                request.getTipoAcao()
+        );
+        existente.setFaseProcessual(
+                request.getFaseProcessual()
+        );
+        existente.setDescricaoObjeto(
+                request.getDescricaoObjeto()
+        );
         existente.setProcesso(processo);
 
-        return classificacaoRepository.save(existente);
+        return classificacaoRepository
+                .save(existente);
     }
 
-    // DELETE
     public void excluir(Long id) {
 
         ClassificacaoProcesso classificacao =
-                classificacaoRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RecursoNaoEncontradoException(
-                                        "Classificação não encontrada"));
+                buscarPorId(id);
 
-        classificacaoRepository.delete(classificacao);
+        classificacaoRepository.delete(
+                classificacao
+        );
     }
 
     public ClassificacaoProcesso alterarStatus(
@@ -94,13 +110,48 @@ public class ClassificacaoProcessoService {
             StatusProcesso novoStatus) {
 
         ClassificacaoProcesso classificacao =
-                classificacaoRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RecursoNaoEncontradoException(
-                                        "Classificação não encontrada"));
+                buscarPorId(id);
 
         classificacao.setStatus(novoStatus);
 
-        return classificacaoRepository.save(classificacao);
+        return classificacaoRepository
+                .save(classificacao);
+    }
+
+    private ClassificacaoProcesso
+    montarClassificacao(
+            ClassificacaoProcessoRequest request) {
+
+        ClassificacaoProcesso classificacao =
+                new ClassificacaoProcesso();
+
+        classificacao.setStatus(
+                request.getStatus()
+        );
+        classificacao.setAreaDireito(
+                request.getAreaDireito()
+        );
+        classificacao.setTipoAcao(
+                request.getTipoAcao()
+        );
+        classificacao.setFaseProcessual(
+                request.getFaseProcessual()
+        );
+        classificacao.setDescricaoObjeto(
+                request.getDescricaoObjeto()
+        );
+
+        return classificacao;
+    }
+
+    private ProcessoJuridico buscarProcesso(
+            Long idProcesso) {
+
+        return processoRepository
+                .findById(idProcesso)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Processo jurídico não encontrado"
+                        ));
     }
 }
