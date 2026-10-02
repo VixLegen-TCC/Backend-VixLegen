@@ -21,18 +21,21 @@ public class CategoriaDocumentoInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        if (repository.count() > 0) {
-            return;
-        }
+        List<String> categoriasPadrao = List.of(
+                "Petição Inicial",
+                "Contestação",
+                "Procuração",
+                "Contrato",
+                "Recurso",
+                "Outros"
+        );
 
-        repository.saveAll(List.of(
-                categoria("Petição Inicial"),
-                categoria("Contestação"),
-                categoria("Procuração"),
-                categoria("Contrato"),
-                categoria("Recurso"),
-                categoria("Outros")
-        ));
+        categoriasPadrao.stream()
+                .filter(descricao ->
+                        !repository.existsByDescricaoIgnoreCase(descricao)
+                )
+                .map(this::categoria)
+                .forEach(repository::save);
     }
 
     private CategoriaDocumento categoria(String descricao) {
