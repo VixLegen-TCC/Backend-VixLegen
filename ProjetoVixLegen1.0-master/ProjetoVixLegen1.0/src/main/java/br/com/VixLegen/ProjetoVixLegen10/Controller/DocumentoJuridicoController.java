@@ -2,10 +2,14 @@ package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
 import br.com.VixLegen.ProjetoVixLegen10.Model.DocumentoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Service.DocumentoJuridicoService;
+import br.com.VixLegen.ProjetoVixLegen10.Service.DocumentoPdfService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -13,10 +17,14 @@ import java.util.List;
 public class DocumentoJuridicoController {
 
     private final DocumentoJuridicoService service;
+    private final DocumentoPdfService pdfService;
 
     public DocumentoJuridicoController(
-            DocumentoJuridicoService service) {
+            DocumentoJuridicoService service,
+            DocumentoPdfService pdfService) {
+
         this.service = service;
+        this.pdfService = pdfService;
     }
 
     @PostMapping
@@ -43,6 +51,31 @@ public class DocumentoJuridicoController {
         return ResponseEntity.ok(
                 service.buscarPorId(id)
         );
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> gerarPdf(
+            @PathVariable Long id) {
+
+        DocumentoJuridico documento =
+                service.buscarPorId(id);
+
+        byte[] pdf = pdfService.gerarPdf(id);
+
+        String nomeSeguro = documento.getNome()
+                .replaceAll("[^a-zA-Z0-9._-]", "_");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename*=UTF-8''"
+                                + java.net.URLEncoder.encode(
+                                        nomeSeguro + ".pdf",
+                                        StandardCharsets.UTF_8
+                                )
+                )
+                .body(pdf);
     }
 
     @PutMapping("/{id}")
