@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.DocumentoJuridicoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.CategoriaDocumento;
@@ -31,22 +32,13 @@ public class DocumentoJuridicoService {
     }
 
     public DocumentoJuridico cadastrar(
-            DocumentoJuridico documento) {
+            DocumentoJuridicoRequest request) {
 
-        ProcessoJuridico processo =
-                buscarProcesso(documento);
+        DocumentoJuridico documento =
+                new DocumentoJuridico();
 
-        CategoriaDocumento categoria =
-                buscarCategoria(documento);
-
-        documento.setProcesso(processo);
-        documento.setCategoriaDocumento(categoria);
-
-        if (documento.getDataCadastro() == null) {
-            documento.setDataCadastro(
-                    LocalDateTime.now()
-            );
-        }
+        aplicarDados(documento, request);
+        documento.setDataCadastro(LocalDateTime.now());
 
         return documentoRepository.save(documento);
     }
@@ -68,34 +60,12 @@ public class DocumentoJuridicoService {
 
     public DocumentoJuridico atualizar(
             Long id,
-            DocumentoJuridico documento) {
+            DocumentoJuridicoRequest request) {
 
         DocumentoJuridico existente =
                 buscarPorId(id);
 
-        ProcessoJuridico processo =
-                buscarProcesso(documento);
-
-        CategoriaDocumento categoria =
-                buscarCategoria(documento);
-
-        existente.setNome(
-                documento.getNome()
-        );
-        existente.setConteudo(
-                documento.getConteudo()
-        );
-        existente.setArquivo(
-                documento.getArquivo()
-        );
-        existente.setTipoArquivo(
-                documento.getTipoArquivo()
-        );
-        existente.setTamanhoArquivo(
-                documento.getTamanhoArquivo()
-        );
-        existente.setProcesso(processo);
-        existente.setCategoriaDocumento(categoria);
+        aplicarDados(existente, request);
 
         return documentoRepository.save(existente);
     }
@@ -148,51 +118,39 @@ public class DocumentoJuridicoService {
         return documentoRepository.save(documento);
     }
 
-    private ProcessoJuridico buscarProcesso(
-            DocumentoJuridico documento) {
+    private void aplicarDados(
+            DocumentoJuridico documento,
+            DocumentoJuridicoRequest request) {
 
-        if (documento.getProcesso() == null
-                || documento.getProcesso()
-                .getIdProcesso() == null) {
-
-            throw new RegraNegocioException(
-                    "O processo do documento é obrigatório"
-            );
-        }
-
-        return processoRepository
-                .findById(
-                        documento.getProcesso()
-                                .getIdProcesso()
-                )
-                .orElseThrow(() ->
+        ProcessoJuridico processo =
+                processoRepository.findById(
+                        request.getProcessoId()
+                ).orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Processo jurídico não encontrado"
                         )
                 );
-    }
 
-    private CategoriaDocumento buscarCategoria(
-            DocumentoJuridico documento) {
-
-        if (documento.getCategoriaDocumento() == null
-                || documento.getCategoriaDocumento()
-                .getCodigoCategoriaDocumento() == null) {
-
-            throw new RegraNegocioException(
-                    "A categoria do documento é obrigatória"
-            );
-        }
-
-        return categoriaRepository
-                .findById(
-                        documento.getCategoriaDocumento()
-                                .getCodigoCategoriaDocumento()
-                )
-                .orElseThrow(() ->
+        CategoriaDocumento categoria =
+                categoriaRepository.findById(
+                        request.getCategoriaDocumentoId()
+                ).orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Categoria de documento não encontrada"
                         )
                 );
+
+        documento.setNome(request.getNome());
+        documento.setConteudo(request.getConteudo());
+        documento.setTipoArquivo(
+                request.getTipoArquivo() == null
+                        ? "text/html"
+                        : request.getTipoArquivo()
+        );
+        documento.setTamanhoArquivo(
+                request.getTamanhoArquivo()
+        );
+        documento.setProcesso(processo);
+        documento.setCategoriaDocumento(categoria);
     }
 }

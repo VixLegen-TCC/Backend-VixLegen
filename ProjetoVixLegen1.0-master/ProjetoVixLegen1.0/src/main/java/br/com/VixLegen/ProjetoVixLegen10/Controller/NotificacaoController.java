@@ -4,6 +4,8 @@ import br.com.VixLegen.ProjetoVixLegen10.Model.Notificacao;
 import br.com.VixLegen.ProjetoVixLegen10.Service.NotificacaoService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,6 +37,17 @@ public class NotificacaoController {
         );
     }
 
+    @GetMapping("/minhas")
+    public ResponseEntity<List<Notificacao>> listarMinhas(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        return ResponseEntity.ok(
+                notificacaoService.listarPorUsuario(
+                        Long.valueOf(jwt.getSubject())
+                )
+        );
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Notificacao> buscarPorId(
             @PathVariable Long id) {
@@ -59,6 +72,30 @@ public class NotificacaoController {
             @PathVariable Long id) {
 
         notificacaoService.excluir(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/lida")
+    public ResponseEntity<Notificacao> marcarComoLida(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        return ResponseEntity.ok(
+                notificacaoService.marcarComoLida(
+                        id,
+                        Long.valueOf(jwt.getSubject())
+                )
+        );
+    }
+
+    @PatchMapping("/minhas/lidas")
+    public ResponseEntity<Void> marcarTodasComoLidas(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        notificacaoService.marcarTodasComoLidas(
+                Long.valueOf(jwt.getSubject())
+        );
 
         return ResponseEntity.noContent().build();
     }

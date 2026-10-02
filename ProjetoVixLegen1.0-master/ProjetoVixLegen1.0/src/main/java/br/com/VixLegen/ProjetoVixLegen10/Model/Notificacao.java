@@ -36,7 +36,17 @@ public class Notificacao {
     @NotNull
     private StatusNotificacao status;
 
+    @Column(nullable = false)
+    private boolean lida = false;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    @PrePersist
+    public void preencherPadroes() {
+        if (dataEnvio == null) {
+            dataEnvio = LocalDateTime.now();
+        }
+    }
 }

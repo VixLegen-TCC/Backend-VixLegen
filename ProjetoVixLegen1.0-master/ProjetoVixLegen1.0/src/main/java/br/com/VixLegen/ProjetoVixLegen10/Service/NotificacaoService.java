@@ -26,7 +26,6 @@ public class NotificacaoService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // CREATE
     public Notificacao cadastrar(Notificacao notificacao) {
 
         Usuario usuario = usuarioRepository.findById(
@@ -36,15 +35,22 @@ public class NotificacaoService {
 
         notificacao.setUsuario(usuario);
 
+        if (notificacao.getDataEnvio() == null) {
+            notificacao.setDataEnvio(LocalDateTime.now());
+        }
+
         return notificacaoRepository.save(notificacao);
     }
 
-    // READ
     public List<Notificacao> listarTodos() {
         return notificacaoRepository.findAll();
     }
 
-    // READ por ID
+    public List<Notificacao> listarPorUsuario(Long idUsuario) {
+        return notificacaoRepository
+                .findByUsuarioIdUsuarioOrderByDataEnvioDesc(idUsuario);
+    }
+
     public Notificacao buscarPorId(Long id) {
 
         return notificacaoRepository.findById(id)
@@ -52,14 +58,11 @@ public class NotificacaoService {
                         new RecursoNaoEncontradoException("Notificação não encontrada"));
     }
 
-    // UPDATE
     public Notificacao atualizar(
             Long id,
             Notificacao notificacao) {
 
-        Notificacao existente = notificacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Notificação não encontrada"));
+        Notificacao existente = buscarPorId(id);
 
         Usuario usuario = usuarioRepository.findById(
                 notificacao.getUsuario().getIdUsuario()
@@ -70,27 +73,45 @@ public class NotificacaoService {
         existente.setDataEnvio(notificacao.getDataEnvio());
         existente.setCanal(notificacao.getCanal());
         existente.setStatus(notificacao.getStatus());
+        existente.setLida(notificacao.isLida());
         existente.setUsuario(usuario);
 
         return notificacaoRepository.save(existente);
     }
 
-    // DELETE
     public void excluir(Long id) {
+        notificacaoRepository.delete(buscarPorId(id));
+    }
 
-        Notificacao notificacao = notificacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Notificação não encontrada"));
+    public Notificacao marcarComoLida(Long id, Long idUsuario) {
 
-        notificacaoRepository.delete(notificacao);
+        Notificacao notificacao = buscarPorId(id);
+
+        if (!notificacao.getUsuario().getIdUsuario().equals(idUsuario)) {
+            throw new RegraNegocioException(
+                    "A notificação não pertence ao usuário autenticado"
+            );
+        }
+
+        notificacao.setLida(true);
+
+        return notificacaoRepository.save(notificacao);
+    }
+
+    public void marcarTodasComoLidas(Long idUsuario) {
+
+        List<Notificacao> notificacoes = listarPorUsuario(idUsuario);
+
+        notificacoes.forEach(notificacao ->
+                notificacao.setLida(true)
+        );
+
+        notificacaoRepository.saveAll(notificacoes);
     }
 
     public Notificacao enviar(Long id) {
 
-        Notificacao notificacao = notificacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Notificação não encontrada"));
+        Notificacao notificacao = buscarPorId(id);
 
         if (notificacao.getStatus() == StatusNotificacao.ENVIADA) {
             throw new RegraNegocioException(
@@ -108,13 +129,9 @@ public class NotificacaoService {
         return notificacaoRepository.save(notificacao);
     }
 
-
     public Notificacao cancelar(Long id) {
 
-        Notificacao notificacao = notificacaoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Notificação não encontrada"));
+        Notificacao notificacao = buscarPorId(id);
 
         if (notificacao.getStatus() == StatusNotificacao.ENVIADA) {
             throw new RegraNegocioException(
