@@ -1,7 +1,9 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
-import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.TarefaRequest;
+import br.com.VixLegen.ProjetoVixLegen10.Enums.PrioridadeTarefa;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusTarefa;
+import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ProcessoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Tarefa;
@@ -31,23 +33,34 @@ public class TarefaService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Tarefa cadastrar(Tarefa tarefa) {
+    public Tarefa cadastrar(TarefaRequest request) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                tarefa.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo =
+                buscarProcesso(request.getProcessoId());
 
-        Usuario usuario = usuarioRepository.findById(
-                tarefa.getUsuarioResponsavel().getIdUsuario()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Usuário responsável não encontrado"));
+        Usuario usuario =
+                buscarUsuario(request.getUsuarioResponsavelId());
 
-        if (tarefa.getPrazo().isBefore(tarefa.getDataAtribuicao())) {
-            throw new RegraNegocioException(
-                    "O prazo não pode ser anterior à data de atribuição");
-        }
+        LocalDateTime dataAtribuicao =
+                LocalDateTime.now();
 
+        validarPrazo(
+                request.getPrazo(),
+                dataAtribuicao
+        );
+
+        Tarefa tarefa = new Tarefa();
+
+        tarefa.setDataAtribuicao(dataAtribuicao);
+        tarefa.setPrazo(request.getPrazo());
+        tarefa.setTipoTarefa(request.getTipoTarefa());
+        tarefa.setDescricao(request.getDescricao());
+        tarefa.setStatus(request.getStatus());
+        tarefa.setPrioridade(
+                request.getPrioridade() != null
+                        ? request.getPrioridade()
+                        : PrioridadeTarefa.MEDIA
+        );
         tarefa.setProcesso(processo);
         tarefa.setUsuarioResponsavel(usuario);
 
@@ -61,32 +74,45 @@ public class TarefaService {
     public Tarefa buscarPorId(Long id) {
         return tarefaRepository.findById(id)
                 .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Tarefa não encontrada"));
+                        new RecursoNaoEncontradoException(
+                                "Tarefa não encontrada"
+                        ));
     }
 
-    public Tarefa atualizar(Long id, Tarefa tarefa) {
+    public Tarefa atualizar(
+            Long id,
+            TarefaRequest request) {
 
         Tarefa existente = buscarPorId(id);
 
-        ProcessoJuridico processo = processoRepository.findById(
-                tarefa.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo =
+                buscarProcesso(request.getProcessoId());
 
-        Usuario usuario = usuarioRepository.findById(
-                tarefa.getUsuarioResponsavel().getIdUsuario()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Usuário responsável não encontrado"));
+        Usuario usuario =
+                buscarUsuario(
+                        request.getUsuarioResponsavelId()
+                );
 
-        if (tarefa.getPrazo().isBefore(tarefa.getDataAtribuicao())) {
-            throw new RegraNegocioException(
-                    "O prazo não pode ser anterior à data de atribuição");
-        }
+        validarPrazo(
+                request.getPrazo(),
+                existente.getDataAtribuicao()
+        );
 
-        existente.setDataAtribuicao(tarefa.getDataAtribuicao());
-        existente.setPrazo(tarefa.getPrazo());
-        existente.setTipoTarefa(tarefa.getTipoTarefa());
-        existente.setStatus(tarefa.getStatus());
+        existente.setPrazo(request.getPrazo());
+        existente.setTipoTarefa(
+                request.getTipoTarefa()
+        );
+        existente.setDescricao(
+                request.getDescricao()
+        );
+        existente.setStatus(
+                request.getStatus()
+        );
+        existente.setPrioridade(
+                request.getPrioridade() != null
+                        ? request.getPrioridade()
+                        : PrioridadeTarefa.MEDIA
+        );
         existente.setProcesso(processo);
         existente.setUsuarioResponsavel(usuario);
 
@@ -94,16 +120,27 @@ public class TarefaService {
     }
 
     public void excluir(Long id) {
+        tarefaRepository.delete(
+                buscarPorId(id)
+        );
+    }
+
+    public Tarefa alterarStatus(
+            Long id,
+            StatusTarefa status) {
+
         Tarefa tarefa = buscarPorId(id);
-        tarefaRepository.delete(tarefa);
+        tarefa.setStatus(status);
+
+        return tarefaRepository.save(tarefa);
     }
 
     public Tarefa concluir(Long id) {
 
-        Tarefa tarefa = buscarPorId(id);
-        tarefa.setStatus(StatusTarefa.CONCLUIDA);
-
-        return tarefaRepository.save(tarefa);
+        return alterarStatus(
+                id,
+                StatusTarefa.CONCLUIDA
+        );
     }
 
     public Tarefa atribuir(
@@ -113,39 +150,73 @@ public class TarefaService {
 
         Tarefa tarefa = buscarPorId(idTarefa);
 
-        Usuario usuario = usuarioRepository.findById(idUsuario)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Usuário não encontrado"));
-
-        ProcessoJuridico processo = processoRepository.findById(idProcesso)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"));
-
-        tarefa.setUsuarioResponsavel(usuario);
-        tarefa.setProcesso(processo);
-        tarefa.setStatus(StatusTarefa.PENDENTE);
+        tarefa.setUsuarioResponsavel(
+                buscarUsuario(idUsuario)
+        );
+        tarefa.setProcesso(
+                buscarProcesso(idProcesso)
+        );
+        tarefa.setStatus(
+                StatusTarefa.PENDENTE
+        );
 
         return tarefaRepository.save(tarefa);
     }
 
-    public Tarefa alterarPrazo(Long id, LocalDateTime novoPrazo) {
+    public Tarefa alterarPrazo(
+            Long id,
+            LocalDateTime novoPrazo) {
 
         Tarefa tarefa = buscarPorId(id);
 
-        if (tarefa.getStatus() == StatusTarefa.CONCLUIDA) {
+        if (tarefa.getStatus()
+                == StatusTarefa.CONCLUIDA) {
+
             throw new RegraNegocioException(
-                    "Não é possível alterar o prazo de uma tarefa concluída");
+                    "Não é possível alterar o prazo de uma tarefa concluída"
+            );
         }
 
-        if (novoPrazo.isBefore(tarefa.getDataAtribuicao())) {
-            throw new RegraNegocioException(
-                    "O prazo não pode ser anterior à data de atribuição");
-        }
+        validarPrazo(
+                novoPrazo,
+                tarefa.getDataAtribuicao()
+        );
 
         tarefa.setPrazo(novoPrazo);
 
         return tarefaRepository.save(tarefa);
+    }
+
+    private ProcessoJuridico buscarProcesso(
+            Long idProcesso) {
+
+        return processoRepository
+                .findById(idProcesso)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Processo jurídico não encontrado"
+                        ));
+    }
+
+    private Usuario buscarUsuario(
+            Long idUsuario) {
+
+        return usuarioRepository
+                .findById(idUsuario)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Usuário responsável não encontrado"
+                        ));
+    }
+
+    private void validarPrazo(
+            LocalDateTime prazo,
+            LocalDateTime dataAtribuicao) {
+
+        if (prazo.isBefore(dataAtribuicao)) {
+            throw new RegraNegocioException(
+                    "O prazo não pode ser anterior à data de atribuição"
+            );
+        }
     }
 }
