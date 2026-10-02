@@ -199,6 +199,13 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 HttpMethod.DELETE,
+                                "/clientes/**",
+                                "/processos/**",
+                                "/tarefas/**"
+                        ).hasAuthority("SCOPE_editar")
+
+                        .requestMatchers(
+                                HttpMethod.DELETE,
                                 "/**"
                         ).hasAuthority("SCOPE_excluir")
 
