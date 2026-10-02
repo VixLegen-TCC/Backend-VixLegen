@@ -10,6 +10,7 @@ import br.com.VixLegen.ProjetoVixLegen10.Repository.DocumentoJuridicoRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.ProcessoJuridicoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,88 +30,60 @@ public class DocumentoJuridicoService {
         this.categoriaRepository = categoriaRepository;
     }
 
-    // CREATE
     public DocumentoJuridico cadastrar(DocumentoJuridico documento) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                documento.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
-
-        CategoriaDocumento categoria = categoriaRepository.findById(
-                documento.getCategoriaDocumento()
-                        .getCodigoCategoriaDocumento()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException(
-                        "Categoria de documento não encontrada"));
+        ProcessoJuridico processo = buscarProcesso(documento);
+        CategoriaDocumento categoria = buscarCategoria(documento);
 
         documento.setProcesso(processo);
         documento.setCategoriaDocumento(categoria);
 
+        if (documento.getDataCadastro() == null) {
+            documento.setDataCadastro(LocalDateTime.now());
+        }
+
         return documentoRepository.save(documento);
     }
 
-    // READ
     public List<DocumentoJuridico> listarTodos() {
         return documentoRepository.findAll();
     }
 
-    // READ por ID
     public DocumentoJuridico buscarPorId(Long id) {
-
         return documentoRepository.findById(id)
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Documento não encontrado"));
     }
 
-    // UPDATE
     public DocumentoJuridico atualizar(
             Long id,
             DocumentoJuridico documento) {
 
-        DocumentoJuridico existente =
-                documentoRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RecursoNaoEncontradoException(
-                                        "Documento não encontrado"));
-
-        ProcessoJuridico processo = processoRepository.findById(
-                documento.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
-
-        CategoriaDocumento categoria = categoriaRepository.findById(
-                documento.getCategoriaDocumento()
-                        .getCodigoCategoriaDocumento()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException(
-                        "Categoria de documento não encontrada"));
+        DocumentoJuridico existente = buscarPorId(id);
+        ProcessoJuridico processo = buscarProcesso(documento);
+        CategoriaDocumento categoria = buscarCategoria(documento);
 
         existente.setNome(documento.getNome());
-        existente.setDataCadastro(documento.getDataCadastro());
+        existente.setConteudo(documento.getConteudo());
         existente.setArquivo(documento.getArquivo());
+        existente.setTipoArquivo(documento.getTipoArquivo());
+        existente.setTamanhoArquivo(documento.getTamanhoArquivo());
         existente.setProcesso(processo);
         existente.setCategoriaDocumento(categoria);
 
         return documentoRepository.save(existente);
     }
 
-    // DELETE
     public void excluir(Long id) {
-
-        DocumentoJuridico documento =
-                documentoRepository.findById(id)
-                        .orElseThrow(() ->
-                                new RecursoNaoEncontradoException(
-                                        "Documento não encontrado"));
-
-        documentoRepository.delete(documento);
+        documentoRepository.delete(buscarPorId(id));
     }
 
     public List<DocumentoJuridico> listarPorProcesso(Long idProcesso) {
 
         if (!processoRepository.existsById(idProcesso)) {
-            throw new RecursoNaoEncontradoException("Processo jurídico não encontrado");
+            throw new RecursoNaoEncontradoException(
+                    "Processo jurídico não encontrado"
+            );
         }
 
         return documentoRepository.findByProcessoIdProcesso(idProcesso);
@@ -118,29 +91,60 @@ public class DocumentoJuridicoService {
 
     public DocumentoJuridico anexar(Long id, String arquivo) {
 
-        DocumentoJuridico documento = documentoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Documento não encontrado"));
+        DocumentoJuridico documento = buscarPorId(id);
 
         if (arquivo == null || arquivo.isBlank()) {
-            throw new RegraNegocioException(
-                    "O arquivo é obrigatório");
+            throw new RegraNegocioException("O arquivo é obrigatório");
         }
 
         documento.setArquivo(arquivo);
 
         return documentoRepository.save(documento);
     }
+
     public DocumentoJuridico remover(Long id) {
 
-        DocumentoJuridico documento = documentoRepository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Documento não encontrado"));
-
+        DocumentoJuridico documento = buscarPorId(id);
         documento.setArquivo(null);
 
         return documentoRepository.save(documento);
+    }
+
+    private ProcessoJuridico buscarProcesso(
+            DocumentoJuridico documento) {
+
+        if (documento.getProcesso() == null
+                || documento.getProcesso().getIdProcesso() == null) {
+            throw new RegraNegocioException(
+                    "O processo do documento é obrigatório"
+            );
+        }
+
+        return processoRepository.findById(
+                documento.getProcesso().getIdProcesso()
+        ).orElseThrow(() ->
+                new RecursoNaoEncontradoException(
+                        "Processo jurídico não encontrado"
+                ));
+    }
+
+    private CategoriaDocumento buscarCategoria(
+            DocumentoJuridico documento) {
+
+        if (documento.getCategoriaDocumento() == null
+                || documento.getCategoriaDocumento()
+                .getCodigoCategoriaDocumento() == null) {
+            throw new RegraNegocioException(
+                    "A categoria do documento é obrigatória"
+            );
+        }
+
+        return categoriaRepository.findById(
+                documento.getCategoriaDocumento()
+                        .getCodigoCategoriaDocumento()
+        ).orElseThrow(() ->
+                new RecursoNaoEncontradoException(
+                        "Categoria de documento não encontrada"
+                ));
     }
 }
