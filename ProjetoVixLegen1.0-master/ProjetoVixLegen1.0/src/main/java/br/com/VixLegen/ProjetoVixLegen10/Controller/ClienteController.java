@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ClienteRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Cliente;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ProcessoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Service.ClienteService;
@@ -21,10 +22,10 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<Cliente> cadastrar(
-            @Valid @RequestBody Cliente cliente) {
+            @Valid @RequestBody ClienteRequest request) {
 
         return ResponseEntity.ok(
-                clienteService.cadastrar(cliente)
+                clienteService.cadastrar(request)
         );
     }
 
@@ -57,10 +58,10 @@ public class ClienteController {
     @PutMapping("/{id}")
     public ResponseEntity<Cliente> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody Cliente cliente) {
+            @Valid @RequestBody ClienteRequest request) {
 
         return ResponseEntity.ok(
-                clienteService.atualizar(id, cliente)
+                clienteService.atualizar(id, request)
         );
     }
 

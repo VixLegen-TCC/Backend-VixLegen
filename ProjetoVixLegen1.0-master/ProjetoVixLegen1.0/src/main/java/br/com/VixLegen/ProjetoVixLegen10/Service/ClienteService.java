@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ClienteRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Cliente;
@@ -29,11 +30,17 @@ public class ClienteService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Cliente cadastrar(Cliente cliente) {
+    public Cliente cadastrar(ClienteRequest request) {
+
+        Cliente cliente = montarCliente(request);
         validarDocumentoDuplicado(cliente, null);
+
         cliente.setUsuarioResponsavel(
-                buscarUsuarioResponsavel(cliente)
+                buscarUsuarioResponsavel(
+                        request.getUsuarioResponsavelId()
+                )
         );
+
         return clienteRepository.save(cliente);
     }
 
@@ -44,7 +51,9 @@ public class ClienteService {
     public Cliente buscarPorId(Long id) {
         return clienteRepository.findById(id)
                 .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Cliente não encontrado"));
+                        new RecursoNaoEncontradoException(
+                                "Cliente não encontrado"
+                        ));
     }
 
     public List<ProcessoJuridico> listarProcessos(Long idCliente) {
@@ -52,18 +61,37 @@ public class ClienteService {
         return processoRepository.findByClienteIdCliente(idCliente);
     }
 
-    public Cliente atualizar(Long id, Cliente cliente) {
+    public Cliente atualizar(
+            Long id,
+            ClienteRequest request) {
 
         Cliente clienteExistente = buscarPorId(id);
-        validarDocumentoDuplicado(cliente, id);
+        Cliente dadosNovos = montarCliente(request);
 
-        clienteExistente.setNomeCompleto(cliente.getNomeCompleto());
-        clienteExistente.setEmail(cliente.getEmail());
-        clienteExistente.setTelefone(cliente.getTelefone());
-        clienteExistente.setCpf(cliente.getCpf());
-        clienteExistente.setCnpj(cliente.getCnpj());
+        validarDocumentoDuplicado(
+                dadosNovos,
+                id
+        );
+
+        clienteExistente.setNomeCompleto(
+                dadosNovos.getNomeCompleto()
+        );
+        clienteExistente.setEmail(
+                dadosNovos.getEmail()
+        );
+        clienteExistente.setTelefone(
+                dadosNovos.getTelefone()
+        );
+        clienteExistente.setCpf(
+                dadosNovos.getCpf()
+        );
+        clienteExistente.setCnpj(
+                dadosNovos.getCnpj()
+        );
         clienteExistente.setUsuarioResponsavel(
-                buscarUsuarioResponsavel(cliente)
+                buscarUsuarioResponsavel(
+                        request.getUsuarioResponsavelId()
+                )
         );
 
         return clienteRepository.save(clienteExistente);
@@ -73,9 +101,13 @@ public class ClienteService {
 
         Cliente cliente = buscarPorId(id);
 
-        if (!processoRepository.findByClienteIdCliente(id).isEmpty()) {
+        if (!processoRepository
+                .findByClienteIdCliente(id)
+                .isEmpty()) {
+
             throw new RegraNegocioException(
-                    "Não é possível excluir um cliente com processos vinculados");
+                    "Não é possível excluir um cliente com processos vinculados"
+            );
         }
 
         clienteRepository.delete(cliente);
@@ -86,42 +118,110 @@ public class ClienteService {
         return processoRepository.findByClienteIdCliente(idCliente);
     }
 
-    private Usuario buscarUsuarioResponsavel(Cliente cliente) {
+    private Cliente montarCliente(
+            ClienteRequest request) {
 
-        if (cliente.getUsuarioResponsavel() == null
-                || cliente.getUsuarioResponsavel().getIdUsuario() == null) {
+        Cliente cliente = new Cliente();
+
+        cliente.setNomeCompleto(
+                request.getNomeCompleto()
+        );
+        cliente.setEmail(
+                request.getEmail()
+        );
+        cliente.setTelefone(
+                request.getTelefone()
+        );
+
+        String cpf = normalizarOpcional(
+                request.getCpf()
+        );
+        String cnpj = normalizarOpcional(
+                request.getCnpj()
+        );
+
+        cliente.setCpf(cpf);
+        cliente.setCnpj(cnpj);
+
+        if ((cpf == null && cnpj == null)
+                || (cpf != null && cnpj != null)) {
+
             throw new RegraNegocioException(
-                    "O usuário responsável pelo cliente é obrigatório");
+                    "Informe CPF ou CNPJ, mas não os dois"
+            );
         }
 
-        return usuarioRepository.findById(
-                cliente.getUsuarioResponsavel().getIdUsuario()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException(
-                        "Usuário responsável não encontrado"));
+        return cliente;
     }
 
-    private void validarDocumentoDuplicado(Cliente cliente, Long idClienteAtual) {
+    private Usuario buscarUsuarioResponsavel(
+            Long idUsuario) {
 
-        if (cliente.getCpf() != null && !cliente.getCpf().isBlank()) {
-            boolean cpfDuplicado = idClienteAtual == null
-                    ? clienteRepository.existsByCpf(cliente.getCpf())
-                    : clienteRepository.existsByCpfAndIdClienteNot(
-                            cliente.getCpf(), idClienteAtual);
+        if (idUsuario == null) {
+            throw new RegraNegocioException(
+                    "O usuário responsável pelo cliente é obrigatório"
+            );
+        }
+
+        return usuarioRepository.findById(idUsuario)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Usuário responsável não encontrado"
+                        ));
+    }
+
+    private String normalizarOpcional(String valor) {
+
+        if (valor == null) {
+            return null;
+        }
+
+        String normalizado = valor.trim();
+
+        return normalizado.isEmpty()
+                ? null
+                : normalizado;
+    }
+
+    private void validarDocumentoDuplicado(
+            Cliente cliente,
+            Long idClienteAtual) {
+
+        if (cliente.getCpf() != null) {
+
+            boolean cpfDuplicado =
+                    idClienteAtual == null
+                            ? clienteRepository
+                            .existsByCpf(cliente.getCpf())
+                            : clienteRepository
+                            .existsByCpfAndIdClienteNot(
+                                    cliente.getCpf(),
+                                    idClienteAtual
+                            );
 
             if (cpfDuplicado) {
-                throw new RegraNegocioException("CPF já cadastrado");
+                throw new RegraNegocioException(
+                        "CPF já cadastrado"
+                );
             }
         }
 
-        if (cliente.getCnpj() != null && !cliente.getCnpj().isBlank()) {
-            boolean cnpjDuplicado = idClienteAtual == null
-                    ? clienteRepository.existsByCnpj(cliente.getCnpj())
-                    : clienteRepository.existsByCnpjAndIdClienteNot(
-                            cliente.getCnpj(), idClienteAtual);
+        if (cliente.getCnpj() != null) {
+
+            boolean cnpjDuplicado =
+                    idClienteAtual == null
+                            ? clienteRepository
+                            .existsByCnpj(cliente.getCnpj())
+                            : clienteRepository
+                            .existsByCnpjAndIdClienteNot(
+                                    cliente.getCnpj(),
+                                    idClienteAtual
+                            );
 
             if (cnpjDuplicado) {
-                throw new RegraNegocioException("CNPJ já cadastrado");
+                throw new RegraNegocioException(
+                        "CNPJ já cadastrado"
+                );
             }
         }
     }

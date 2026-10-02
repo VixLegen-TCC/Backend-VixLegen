@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ProcessoJuridicoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusProcesso;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ProcessoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Service.ProcessoJuridicoService;
@@ -23,10 +24,10 @@ public class ProcessoJuridicoController {
 
     @PostMapping
     public ResponseEntity<ProcessoJuridico> cadastrar(
-            @Valid @RequestBody ProcessoJuridico processo) {
+            @Valid @RequestBody ProcessoJuridicoRequest request) {
 
         return ResponseEntity.ok(
-                processoService.cadastrar(processo)
+                processoService.cadastrar(request)
         );
     }
 
@@ -50,10 +51,10 @@ public class ProcessoJuridicoController {
     @PutMapping("/{id}")
     public ResponseEntity<ProcessoJuridico> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody ProcessoJuridico processo) {
+            @Valid @RequestBody ProcessoJuridicoRequest request) {
 
         return ResponseEntity.ok(
-                processoService.atualizar(id, processo)
+                processoService.atualizar(id, request)
         );
     }
 

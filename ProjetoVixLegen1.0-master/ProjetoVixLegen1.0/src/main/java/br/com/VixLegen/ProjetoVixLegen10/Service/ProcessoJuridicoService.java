@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Service;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ProcessoJuridicoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusProcesso;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
@@ -31,14 +32,17 @@ public class ProcessoJuridicoService {
         this.classificacaoRepository = classificacaoRepository;
     }
 
-    public ProcessoJuridico cadastrar(ProcessoJuridico processo) {
+    public ProcessoJuridico cadastrar(
+            ProcessoJuridicoRequest request) {
 
-        Cliente cliente = clienteRepository.findById(
-                processo.getCliente().getIdCliente()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Cliente não encontrado"));
+        Cliente cliente = buscarCliente(
+                request.getClienteId()
+        );
 
         validarLimiteProcessos(cliente);
+
+        ProcessoJuridico processo =
+                montarProcesso(request);
 
         processo.setCliente(cliente);
 
@@ -52,94 +56,190 @@ public class ProcessoJuridicoService {
     public ProcessoJuridico buscarPorId(Long id) {
         return processoRepository.findById(id)
                 .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+                        new RecursoNaoEncontradoException(
+                                "Processo jurídico não encontrado"
+                        ));
     }
 
     public ProcessoJuridico atualizar(
             Long id,
-            ProcessoJuridico processo) {
+            ProcessoJuridicoRequest request) {
 
-        ProcessoJuridico processoExistente = buscarPorId(id);
+        ProcessoJuridico processoExistente =
+                buscarPorId(id);
 
-        classificacaoRepository.findByProcessoIdProcesso(id)
+        classificacaoRepository
+                .findByProcessoIdProcesso(id)
                 .filter(classificacao ->
-                        classificacao.getStatus() == StatusProcesso.ENCERRADO)
+                        classificacao.getStatus()
+                                == StatusProcesso.ENCERRADO
+                )
                 .ifPresent(classificacao -> {
                     throw new RegraNegocioException(
-                            "Processo encerrado não pode ser alterado");
+                            "Processo encerrado não pode ser alterado"
+                    );
                 });
 
-        Cliente cliente = clienteRepository.findById(
-                processo.getCliente().getIdCliente()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Cliente não encontrado"));
+        Cliente cliente = buscarCliente(
+                request.getClienteId()
+        );
 
-        if (!processoExistente.getCliente().getIdCliente()
+        if (!processoExistente
+                .getCliente()
+                .getIdCliente()
                 .equals(cliente.getIdCliente())) {
+
             validarLimiteProcessos(cliente);
         }
 
-        processoExistente.setNumeroProcesso(processo.getNumeroProcesso());
-        processoExistente.setVara(processo.getVara());
-        processoExistente.setComarca(processo.getComarca());
-        processoExistente.setTribunal(processo.getTribunal());
-        processoExistente.setInstancia(processo.getInstancia());
-        processoExistente.setSegredoJustica(processo.isSegredoJustica());
-        processoExistente.setDataAbertura(processo.getDataAbertura());
-        processoExistente.setDataEncerramento(processo.getDataEncerramento());
+        processoExistente.setNumeroProcesso(
+                request.getNumeroProcesso()
+        );
+        processoExistente.setVara(
+                request.getVara()
+        );
+        processoExistente.setComarca(
+                request.getComarca()
+        );
+        processoExistente.setTribunal(
+                request.getTribunal()
+        );
+        processoExistente.setInstancia(
+                request.getInstancia()
+        );
+        processoExistente.setSegredoJustica(
+                request.isSegredoJustica()
+        );
+        processoExistente.setDataAbertura(
+                request.getDataAbertura()
+        );
+        processoExistente.setDataEncerramento(
+                request.getDataEncerramento()
+        );
         processoExistente.setCliente(cliente);
 
-        return processoRepository.save(processoExistente);
+        return processoRepository.save(
+                processoExistente
+        );
     }
 
     public void excluir(Long id) {
-        ProcessoJuridico processo = buscarPorId(id);
+        ProcessoJuridico processo =
+                buscarPorId(id);
+
         processoRepository.delete(processo);
     }
 
-    public List<ProcessoJuridico> listarPorStatus(StatusProcesso status) {
-        return classificacaoRepository.findByStatus(status)
+    public List<ProcessoJuridico> listarPorStatus(
+            StatusProcesso status) {
+
+        return classificacaoRepository
+                .findByStatus(status)
                 .stream()
                 .map(ClassificacaoProcesso::getProcesso)
                 .toList();
     }
 
     public StatusProcesso consultarSituacao(Long id) {
+
         if (!processoRepository.existsById(id)) {
             throw new RecursoNaoEncontradoException(
-                    "Processo jurídico não encontrado");
+                    "Processo jurídico não encontrado"
+            );
         }
 
-        return classificacaoRepository.findByProcessoIdProcesso(id)
+        return classificacaoRepository
+                .findByProcessoIdProcesso(id)
                 .map(ClassificacaoProcesso::getStatus)
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
-                                "Classificação do processo não encontrada"));
+                                "Classificação do processo não encontrada"
+                        ));
     }
 
-    private void validarLimiteProcessos(Cliente cliente) {
+    private ProcessoJuridico montarProcesso(
+            ProcessoJuridicoRequest request) {
 
-        Usuario responsavel = cliente.getUsuarioResponsavel();
+        ProcessoJuridico processo =
+                new ProcessoJuridico();
 
-        if (responsavel == null || responsavel.getCategoria() == null) {
+        processo.setNumeroProcesso(
+                request.getNumeroProcesso()
+        );
+        processo.setVara(
+                request.getVara()
+        );
+        processo.setComarca(
+                request.getComarca()
+        );
+        processo.setTribunal(
+                request.getTribunal()
+        );
+        processo.setInstancia(
+                request.getInstancia()
+        );
+        processo.setSegredoJustica(
+                request.isSegredoJustica()
+        );
+        processo.setDataAbertura(
+                request.getDataAbertura()
+        );
+        processo.setDataEncerramento(
+                request.getDataEncerramento()
+        );
+
+        return processo;
+    }
+
+    private Cliente buscarCliente(Long idCliente) {
+
+        if (idCliente == null) {
             throw new RegraNegocioException(
-                    "Cliente sem usuário responsável ou categoria definida");
+                    "O cliente do processo é obrigatório"
+            );
         }
 
-        Integer limite = responsavel.getCategoria()
-                .getLimiteProcessosSimultaneos();
+        return clienteRepository
+                .findById(idCliente)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Cliente não encontrado"
+                        ));
+    }
+
+    private void validarLimiteProcessos(
+            Cliente cliente) {
+
+        Usuario responsavel =
+                cliente.getUsuarioResponsavel();
+
+        if (responsavel == null
+                || responsavel.getCategoria() == null) {
+
+            throw new RegraNegocioException(
+                    "Cliente sem usuário responsável ou categoria definida"
+            );
+        }
+
+        Integer limite =
+                responsavel
+                        .getCategoria()
+                        .getLimiteProcessosSimultaneos();
 
         if (limite == null || limite <= 0) {
             return;
         }
 
         long quantidadeAtual =
-                processoRepository.countByClienteUsuarioResponsavelIdUsuario(
-                        responsavel.getIdUsuario());
+                processoRepository
+                        .countByClienteUsuarioResponsavelIdUsuario(
+                                responsavel.getIdUsuario()
+                        );
 
         if (quantidadeAtual >= limite) {
             throw new RegraNegocioException(
-                    "O usuário responsável atingiu o limite de processos simultâneos");
+                    "O usuário responsável atingiu o limite de processos simultâneos"
+            );
         }
     }
 }
