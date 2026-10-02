@@ -1,5 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Controller;
 
+import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.DocumentoJuridicoRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Model.DocumentoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Service.DocumentoJuridicoService;
 import br.com.VixLegen.ProjetoVixLegen10.Service.DocumentoPdfService;
@@ -9,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -29,10 +31,10 @@ public class DocumentoJuridicoController {
 
     @PostMapping
     public ResponseEntity<DocumentoJuridico> cadastrar(
-            @Valid @RequestBody DocumentoJuridico documento) {
+            @Valid @RequestBody DocumentoJuridicoRequest request) {
 
         return ResponseEntity.ok(
-                service.cadastrar(documento)
+                service.cadastrar(request)
         );
     }
 
@@ -65,15 +67,16 @@ public class DocumentoJuridicoController {
         String nomeSeguro = documento.getNome()
                 .replaceAll("[^a-zA-Z0-9._-]", "_");
 
+        String nomeArquivo = URLEncoder.encode(
+                nomeSeguro + ".pdf",
+                StandardCharsets.UTF_8
+        ).replace("+", "%20");
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename*=UTF-8''"
-                                + java.net.URLEncoder.encode(
-                                        nomeSeguro + ".pdf",
-                                        StandardCharsets.UTF_8
-                                )
+                        "attachment; filename*=UTF-8''" + nomeArquivo
                 )
                 .body(pdf);
     }
@@ -81,10 +84,10 @@ public class DocumentoJuridicoController {
     @PutMapping("/{id}")
     public ResponseEntity<DocumentoJuridico> atualizar(
             @PathVariable Long id,
-            @Valid @RequestBody DocumentoJuridico documento) {
+            @Valid @RequestBody DocumentoJuridicoRequest request) {
 
         return ResponseEntity.ok(
-                service.atualizar(id, documento)
+                service.atualizar(id, request)
         );
     }
 
