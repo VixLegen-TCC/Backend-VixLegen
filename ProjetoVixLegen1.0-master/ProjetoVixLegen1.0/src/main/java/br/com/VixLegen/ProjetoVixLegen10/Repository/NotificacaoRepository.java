@@ -8,4 +8,6 @@ import java.util.List;
 public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> {
 
     List<Notificacao> findByUsuarioIdUsuarioOrderByDataEnvioDesc(Long idUsuario);
+
+    boolean existsByChaveAlerta(String chaveAlerta);
 }
