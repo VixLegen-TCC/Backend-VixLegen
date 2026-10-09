@@ -7,12 +7,15 @@ import br.com.VixLegen.ProjetoVixLegen10.DTOs.Response.UsuarioResponse;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Categoria;
+import br.com.VixLegen.ProjetoVixLegen10.Model.Empresa;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Usuario;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.CategoriaRepository;
+import br.com.VixLegen.ProjetoVixLegen10.Repository.EmpresaRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,21 +24,25 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final CategoriaRepository categoriaRepository;
+    private final EmpresaRepository empresaRepository;
     private final PasswordEncoder passwordEncoder;
     private final String categoriaPublicaPadrao;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
             CategoriaRepository categoriaRepository,
+            EmpresaRepository empresaRepository,
             PasswordEncoder passwordEncoder,
             @Value("${cadastro.categoria-padrao:Advogado Júnior}") String categoriaPublicaPadrao) {
 
         this.usuarioRepository = usuarioRepository;
         this.categoriaRepository = categoriaRepository;
+        this.empresaRepository = empresaRepository;
         this.passwordEncoder = passwordEncoder;
         this.categoriaPublicaPadrao = categoriaPublicaPadrao;
     }
 
+    @Transactional
     public UsuarioResponse cadastrar(UsuarioRequest request) {
 
         validarDuplicidade(request.getEmail(), request.getCpf());
@@ -61,11 +68,10 @@ public class UsuarioService {
                 categoria
         );
 
-        return converterParaResponse(
-                usuarioRepository.save(usuario)
-        );
+        return salvarUsuarioComOrganizacao(usuario);
     }
 
+    @Transactional
     public UsuarioResponse cadastrarPublico(
             CadastroPublicoRequest request) {
 
@@ -97,9 +103,28 @@ public class UsuarioService {
                 categoria
         );
 
-        return converterParaResponse(
-                usuarioRepository.save(usuario)
-        );
+        return salvarUsuarioComOrganizacao(usuario);
+    }
+
+    /**
+     * Cada novo cadastro inicia com sua própria organização.
+     * Nomes iguais de empresas não comprovam permissão de compartilhar clientes.
+     * O cadastro é transacional para evitar vínculos incompletos.
+     */
+    private UsuarioResponse salvarUsuarioComOrganizacao(Usuario usuario) {
+        Usuario salvo = usuarioRepository.saveAndFlush(usuario);
+
+        Empresa organizacao = new Empresa();
+        String nome = salvo.getEmpresa() == null ? "" : salvo.getEmpresa().trim();
+        if (nome.isBlank()) {
+            nome = "Escritório do usuário " + salvo.getIdUsuario();
+        }
+        organizacao.setNome(nome.substring(0, Math.min(nome.length(), 160)));
+        organizacao.setCriadorUsuarioId(salvo.getIdUsuario());
+        organizacao = empresaRepository.save(organizacao);
+
+        salvo.setEmpresaOrganizacao(organizacao);
+        return converterParaResponse(usuarioRepository.save(salvo));
     }
 
     public List<UsuarioResponse> listarTodos() {
