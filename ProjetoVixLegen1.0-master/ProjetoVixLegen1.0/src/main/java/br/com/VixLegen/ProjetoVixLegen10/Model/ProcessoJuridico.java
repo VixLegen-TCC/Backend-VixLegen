@@ -44,6 +44,9 @@ public class ProcessoJuridico {
 
     private LocalDate dataEncerramento;
 
+    // Prazo informado pelo advogado, separado da data de encerramento.
+    private LocalDate prazoProcessual;
+
     @NotNull
     @ManyToOne
     @JoinColumn(name = "cliente_id", nullable = false)
