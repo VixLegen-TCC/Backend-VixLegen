@@ -72,6 +72,11 @@ public class Usuario {
 
     private boolean ativo;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    @JsonIgnore
+    private String fotoPerfil;
+
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
