@@ -17,13 +17,16 @@ public class NotificacaoService {
 
     private final NotificacaoRepository notificacaoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AlertaPrazoService alertaPrazoService;
 
     public NotificacaoService(
             NotificacaoRepository notificacaoRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            AlertaPrazoService alertaPrazoService) {
 
         this.notificacaoRepository = notificacaoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.alertaPrazoService = alertaPrazoService;
     }
 
     public Notificacao cadastrar(Notificacao notificacao) {
@@ -48,6 +51,7 @@ public class NotificacaoService {
 
     public List<Notificacao> listarPorUsuario(Long idUsuario) {
 
+        alertaPrazoService.gerarParaUsuario(idUsuario);
         garantirNotificacoesIniciais(idUsuario);
 
         return notificacaoRepository

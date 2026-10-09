@@ -118,6 +118,7 @@ public class ProcessoJuridicoService {
         processoExistente.setDataEncerramento(
                 request.getDataEncerramento()
         );
+        processoExistente.setPrazoProcessual(request.getPrazoProcessual());
         processoExistente.setCliente(cliente);
 
         return processoRepository.save(
@@ -187,6 +188,7 @@ public class ProcessoJuridicoService {
         processo.setDataEncerramento(
                 request.getDataEncerramento()
         );
+        processo.setPrazoProcessual(request.getPrazoProcessual());
 
         return processo;
     }

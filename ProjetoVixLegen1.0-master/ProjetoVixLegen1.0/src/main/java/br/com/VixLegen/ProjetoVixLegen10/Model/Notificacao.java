@@ -1,6 +1,7 @@
 package br.com.VixLegen.ProjetoVixLegen10.Model;
 
 import br.com.VixLegen.ProjetoVixLegen10.Enums.StatusNotificacao;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -39,8 +40,21 @@ public class Notificacao {
     @Column(nullable = false)
     private boolean lida = false;
 
+    @Column(name = "chave_alerta", unique = true, length = 180)
+    private String chaveAlerta;
+
+    @Column(name = "tipo_referencia", length = 20)
+    private String tipoReferencia;
+
+    @Column(name = "referencia_id")
+    private Long referenciaId;
+
+    @Column(name = "etapa_alerta", length = 20)
+    private String etapaAlerta;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
+    @JsonIgnore
     private Usuario usuario;
 
     @PrePersist
