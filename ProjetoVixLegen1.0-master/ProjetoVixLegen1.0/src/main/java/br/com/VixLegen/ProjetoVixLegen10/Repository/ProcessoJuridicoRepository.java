@@ -11,6 +11,10 @@ public interface ProcessoJuridicoRepository extends JpaRepository<ProcessoJuridi
 
     List<ProcessoJuridico> findByClienteUsuarioResponsavelIdUsuario(Long usuarioId);
 
+    List<ProcessoJuridico> findByClienteEmpresaOrganizacaoIdEmpresa(Long empresaId);
+
+    java.util.Optional<ProcessoJuridico> findByIdProcessoAndClienteEmpresaOrganizacaoIdEmpresa(Long id, Long empresaId);
+
     java.util.Optional<ProcessoJuridico> findByIdProcessoAndClienteUsuarioResponsavelIdUsuario(Long id, Long usuarioId);
 
     long countByClienteUsuarioResponsavelIdUsuario(Long idUsuario);
