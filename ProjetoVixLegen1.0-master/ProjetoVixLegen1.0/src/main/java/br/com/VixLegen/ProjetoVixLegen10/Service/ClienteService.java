@@ -10,6 +10,8 @@ import br.com.VixLegen.ProjetoVixLegen10.Repository.ClienteRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.ProcessoJuridicoRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class ClienteService {
 
         cliente.setUsuarioResponsavel(
                 buscarUsuarioResponsavel(
-                        request.getUsuarioResponsavelId()
+                        usuarioAtualId()
                 )
         );
 
@@ -45,11 +47,11 @@ public class ClienteService {
     }
 
     public List<Cliente> listarTodos() {
-        return clienteRepository.findAll();
+        return clienteRepository.findByUsuarioResponsavelIdUsuario(usuarioAtualId());
     }
 
     public Cliente buscarPorId(Long id) {
-        return clienteRepository.findById(id)
+        return clienteRepository.findByIdClienteAndUsuarioResponsavelIdUsuario(id, usuarioAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Cliente não encontrado"
@@ -116,6 +118,12 @@ public class ClienteService {
     public List<ProcessoJuridico> consultarHistorico(Long idCliente) {
         buscarPorId(idCliente);
         return processoRepository.findByClienteIdCliente(idCliente);
+    }
+
+    private Long usuarioAtualId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof Jwt jwt)) throw new org.springframework.security.access.AccessDeniedException("Sessão inválida");
+        return Long.valueOf(jwt.getSubject());
     }
 
     private Cliente montarCliente(
