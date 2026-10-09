@@ -161,6 +161,13 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/notificacoes/minhas")
+                        .hasAuthority("SCOPE_visualizar")
+                        .requestMatchers(HttpMethod.PATCH,
+                                "/notificacoes/minhas/lidas", "/notificacoes/*/lida")
+                        .hasAuthority("SCOPE_visualizar")
+                        .requestMatchers("/notificacoes/**").hasRole("ADMIN")
+
                         .requestMatchers(
                                 "/categorias/**"
                         ).hasRole("ADMIN")
