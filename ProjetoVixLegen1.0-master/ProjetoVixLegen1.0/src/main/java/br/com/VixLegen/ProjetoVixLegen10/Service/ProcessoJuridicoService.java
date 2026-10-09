@@ -12,6 +12,9 @@ import br.com.VixLegen.ProjetoVixLegen10.Repository.ClassificacaoProcessoReposit
 import br.com.VixLegen.ProjetoVixLegen10.Repository.ClienteRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.ProcessoJuridicoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -50,11 +53,11 @@ public class ProcessoJuridicoService {
     }
 
     public List<ProcessoJuridico> listarTodos() {
-        return processoRepository.findAll();
+        return processoRepository.findByClienteUsuarioResponsavelIdUsuario(usuarioAtualId());
     }
 
     public ProcessoJuridico buscarPorId(Long id) {
-        return processoRepository.findById(id)
+        return processoRepository.findByIdProcessoAndClienteUsuarioResponsavelIdUsuario(id, usuarioAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Processo jurídico não encontrado"
@@ -123,6 +126,7 @@ public class ProcessoJuridicoService {
         );
     }
 
+    @Transactional
     public void excluir(Long id) {
         ProcessoJuridico processo =
                 buscarPorId(id);
@@ -136,13 +140,14 @@ public class ProcessoJuridicoService {
         return classificacaoRepository
                 .findByStatus(status)
                 .stream()
+                .filter(c -> c.getProcesso().getCliente().getUsuarioResponsavel().getIdUsuario().equals(usuarioAtualId()))
                 .map(ClassificacaoProcesso::getProcesso)
                 .toList();
     }
 
     public StatusProcesso consultarSituacao(Long id) {
 
-        if (!processoRepository.existsById(id)) {
+        if (processoRepository.findByIdProcessoAndClienteUsuarioResponsavelIdUsuario(id, usuarioAtualId()).isEmpty()) {
             throw new RecursoNaoEncontradoException(
                     "Processo jurídico não encontrado"
             );
@@ -155,6 +160,12 @@ public class ProcessoJuridicoService {
                         new RecursoNaoEncontradoException(
                                 "Classificação do processo não encontrada"
                         ));
+    }
+
+    private Long usuarioAtualId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!(principal instanceof Jwt jwt)) throw new org.springframework.security.access.AccessDeniedException("Sessão inválida");
+        return Long.valueOf(jwt.getSubject());
     }
 
     private ProcessoJuridico montarProcesso(
@@ -200,7 +211,7 @@ public class ProcessoJuridicoService {
         }
 
         return clienteRepository
-                .findById(idCliente)
+                .findByIdClienteAndUsuarioResponsavelIdUsuario(idCliente, usuarioAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Cliente não encontrado"
