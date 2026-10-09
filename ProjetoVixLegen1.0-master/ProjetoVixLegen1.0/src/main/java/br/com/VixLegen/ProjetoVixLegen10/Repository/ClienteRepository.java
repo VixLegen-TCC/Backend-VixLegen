@@ -19,5 +19,9 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
     List<Cliente> findByUsuarioResponsavelIdUsuario(Long usuarioId);
 
+    List<Cliente> findByEmpresaOrganizacaoIdEmpresa(Long empresaId);
+
+    java.util.Optional<Cliente> findByIdClienteAndEmpresaOrganizacaoIdEmpresa(Long id, Long empresaId);
+
     java.util.Optional<Cliente> findByIdClienteAndUsuarioResponsavelIdUsuario(Long id, Long usuarioId);
 }

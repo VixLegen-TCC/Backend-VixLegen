@@ -43,6 +43,12 @@ public class Cliente {
     @JoinColumn(name = "usuario_responsavel_id", nullable = false)
     private Usuario usuarioResponsavel;
 
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_organizacao_id", nullable = false)
+    @JsonIgnore
+    private Empresa empresaOrganizacao;
+
     @OneToMany(mappedBy = "cliente")
     @JsonIgnore
     private List<ProcessoJuridico> processos = new ArrayList<>();

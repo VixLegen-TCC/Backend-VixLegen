@@ -21,15 +21,18 @@ public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final ProcessoJuridicoRepository processoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TenantAccessService tenant;
 
     public ClienteService(
             ClienteRepository clienteRepository,
             ProcessoJuridicoRepository processoRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            TenantAccessService tenant) {
 
         this.clienteRepository = clienteRepository;
         this.processoRepository = processoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.tenant = tenant;
     }
 
     public Cliente cadastrar(ClienteRequest request) {
@@ -37,9 +40,10 @@ public class ClienteService {
         Cliente cliente = montarCliente(request);
         validarDocumentoDuplicado(cliente, null);
 
+        cliente.setEmpresaOrganizacao(tenant.empresaAtual());
         cliente.setUsuarioResponsavel(
                 buscarUsuarioResponsavel(
-                        usuarioAtualId()
+                        tenant.usuarioAtualId()
                 )
         );
 
@@ -47,15 +51,11 @@ public class ClienteService {
     }
 
     public List<Cliente> listarTodos() {
-        return clienteRepository.findByUsuarioResponsavelIdUsuario(usuarioAtualId());
+        return clienteRepository.findByEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public Cliente buscarPorId(Long id) {
-        return clienteRepository.findByIdClienteAndUsuarioResponsavelIdUsuario(id, usuarioAtualId())
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Cliente não encontrado"
-                        ));
+        return tenant.cliente(id);
     }
 
     public List<ProcessoJuridico> listarProcessos(Long idCliente) {
@@ -120,12 +120,6 @@ public class ClienteService {
         return processoRepository.findByClienteIdCliente(idCliente);
     }
 
-    private Long usuarioAtualId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!(principal instanceof Jwt jwt)) throw new org.springframework.security.access.AccessDeniedException("Sessão inválida");
-        return Long.valueOf(jwt.getSubject());
-    }
-
     private Cliente montarCliente(
             ClienteRequest request) {
 
@@ -171,11 +165,7 @@ public class ClienteService {
             );
         }
 
-        return usuarioRepository.findById(idUsuario)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Usuário responsável não encontrado"
-                        ));
+        return tenant.usuarioDaEmpresa(idUsuario);
     }
 
     private String normalizarOpcional(String valor) {

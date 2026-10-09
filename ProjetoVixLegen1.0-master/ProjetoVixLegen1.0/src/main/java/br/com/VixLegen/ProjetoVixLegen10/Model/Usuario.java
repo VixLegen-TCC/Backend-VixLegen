@@ -52,8 +52,13 @@ public class Usuario {
     @Column(unique = true, nullable = false)
     private String rg;
 
+    // Nome legado exibido no perfil. O vínculo de acesso é sempre empresaOrganizacao.
     @NotBlank
     private String empresa;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_organizacao_id")
+    private Empresa empresaOrganizacao;
 
     @NotBlank
     private String numeroOAB;

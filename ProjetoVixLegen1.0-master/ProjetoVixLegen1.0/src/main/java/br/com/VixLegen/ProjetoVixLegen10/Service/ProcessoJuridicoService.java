@@ -24,15 +24,18 @@ public class ProcessoJuridicoService {
     private final ProcessoJuridicoRepository processoRepository;
     private final ClienteRepository clienteRepository;
     private final ClassificacaoProcessoRepository classificacaoRepository;
+    private final TenantAccessService tenant;
 
     public ProcessoJuridicoService(
             ProcessoJuridicoRepository processoRepository,
             ClienteRepository clienteRepository,
-            ClassificacaoProcessoRepository classificacaoRepository) {
+            ClassificacaoProcessoRepository classificacaoRepository,
+            TenantAccessService tenant) {
 
         this.processoRepository = processoRepository;
         this.clienteRepository = clienteRepository;
         this.classificacaoRepository = classificacaoRepository;
+        this.tenant = tenant;
     }
 
     public ProcessoJuridico cadastrar(
@@ -53,15 +56,11 @@ public class ProcessoJuridicoService {
     }
 
     public List<ProcessoJuridico> listarTodos() {
-        return processoRepository.findByClienteUsuarioResponsavelIdUsuario(usuarioAtualId());
+        return processoRepository.findByClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public ProcessoJuridico buscarPorId(Long id) {
-        return processoRepository.findByIdProcessoAndClienteUsuarioResponsavelIdUsuario(id, usuarioAtualId())
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"
-                        ));
+        return tenant.processo(id);
     }
 
     public ProcessoJuridico atualizar(
@@ -140,18 +139,14 @@ public class ProcessoJuridicoService {
         return classificacaoRepository
                 .findByStatus(status)
                 .stream()
-                .filter(c -> c.getProcesso().getCliente().getUsuarioResponsavel().getIdUsuario().equals(usuarioAtualId()))
+                .filter(c -> c.getProcesso().getCliente().getEmpresaOrganizacao() != null && c.getProcesso().getCliente().getEmpresaOrganizacao().getIdEmpresa().equals(tenant.empresaAtualId()))
                 .map(ClassificacaoProcesso::getProcesso)
                 .toList();
     }
 
     public StatusProcesso consultarSituacao(Long id) {
 
-        if (processoRepository.findByIdProcessoAndClienteUsuarioResponsavelIdUsuario(id, usuarioAtualId()).isEmpty()) {
-            throw new RecursoNaoEncontradoException(
-                    "Processo jurídico não encontrado"
-            );
-        }
+        tenant.processo(id);
 
         return classificacaoRepository
                 .findByProcessoIdProcesso(id)
@@ -160,12 +155,6 @@ public class ProcessoJuridicoService {
                         new RecursoNaoEncontradoException(
                                 "Classificação do processo não encontrada"
                         ));
-    }
-
-    private Long usuarioAtualId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!(principal instanceof Jwt jwt)) throw new org.springframework.security.access.AccessDeniedException("Sessão inválida");
-        return Long.valueOf(jwt.getSubject());
     }
 
     private ProcessoJuridico montarProcesso(
@@ -210,12 +199,7 @@ public class ProcessoJuridicoService {
             );
         }
 
-        return clienteRepository
-                .findByIdClienteAndUsuarioResponsavelIdUsuario(idCliente, usuarioAtualId())
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Cliente não encontrado"
-                        ));
+        return tenant.cliente(idCliente);
     }
 
     private void validarLimiteProcessos(
