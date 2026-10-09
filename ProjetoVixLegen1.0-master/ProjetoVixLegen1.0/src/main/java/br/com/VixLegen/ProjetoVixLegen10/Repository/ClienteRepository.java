@@ -16,4 +16,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     boolean existsByCnpjAndIdClienteNot(String cnpj, Long idCliente);
 
     List<Cliente> findByNomeCompletoContainingIgnoreCase(String nome);
+
+    List<Cliente> findByUsuarioResponsavelIdUsuario(Long usuarioId);
+
+    java.util.Optional<Cliente> findByIdClienteAndUsuarioResponsavelIdUsuario(Long id, Long usuarioId);
 }

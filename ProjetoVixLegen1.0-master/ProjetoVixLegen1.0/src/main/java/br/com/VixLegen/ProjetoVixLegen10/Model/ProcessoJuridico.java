@@ -49,27 +49,27 @@ public class ProcessoJuridico {
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    @OneToOne(mappedBy = "processo")
+    @OneToOne(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private ClassificacaoProcesso classificacao;
 
-    @OneToMany(mappedBy = "processo")
+    @OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ParteEnvolvida> partesEnvolvidas = new ArrayList<>();
 
-    @OneToMany(mappedBy = "processo")
+    @OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<DocumentoJuridico> documentos = new ArrayList<>();
 
-    @OneToMany(mappedBy = "processo")
+    @OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Tarefa> tarefas = new ArrayList<>();
 
-    @OneToMany(mappedBy = "processo")
+    @OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<MovimentacaoProcessual> movimentacoes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "processo")
+    @OneToMany(mappedBy = "processo", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<IA> analisesIA = new ArrayList<>();
 }
