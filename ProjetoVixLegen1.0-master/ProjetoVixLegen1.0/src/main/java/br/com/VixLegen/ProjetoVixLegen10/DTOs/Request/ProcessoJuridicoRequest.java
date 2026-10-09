@@ -33,6 +33,9 @@ public class ProcessoJuridicoRequest {
 
     private LocalDate dataEncerramento;
 
+    // Prazo opcional, não calculado automaticamente.
+    private LocalDate prazoProcessual;
+
     @NotNull
     private Long clienteId;
 }
