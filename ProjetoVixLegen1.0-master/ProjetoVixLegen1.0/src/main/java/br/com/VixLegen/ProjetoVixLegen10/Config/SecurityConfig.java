@@ -161,6 +161,12 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
+                        // Remover a própria foto não equivale a excluir registros
+                        // do sistema. O controller obtém o usuário do JWT e
+                        // nunca aceita um ID de outro usuário nessa operação.
+                        .requestMatchers(HttpMethod.DELETE, "/auth/me/foto")
+                        .authenticated()
+
                         .requestMatchers(HttpMethod.GET, "/notificacoes/minhas")
                         .hasAuthority("SCOPE_visualizar")
                         .requestMatchers(HttpMethod.PATCH,
