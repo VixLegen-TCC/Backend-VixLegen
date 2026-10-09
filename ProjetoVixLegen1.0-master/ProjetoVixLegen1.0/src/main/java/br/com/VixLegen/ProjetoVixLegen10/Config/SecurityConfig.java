@@ -202,7 +202,7 @@ public class SecurityConfig {
                                 "/clientes/**",
                                 "/processos/**",
                                 "/tarefas/**"
-                        ).hasAuthority("SCOPE_editar")
+                        ).hasAuthority("SCOPE_excluir")
 
                         .requestMatchers(
                                 HttpMethod.DELETE,
