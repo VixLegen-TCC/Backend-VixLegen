@@ -14,23 +14,23 @@ public class MovimentacaoProcessualService {
 
     private final MovimentacaoProcessualRepository movimentacaoRepository;
     private final ProcessoJuridicoRepository processoRepository;
+    private final TenantAccessService tenant;
 
     public MovimentacaoProcessualService(
             MovimentacaoProcessualRepository movimentacaoRepository,
-            ProcessoJuridicoRepository processoRepository) {
+            ProcessoJuridicoRepository processoRepository,
+            TenantAccessService tenant) {
 
         this.movimentacaoRepository = movimentacaoRepository;
         this.processoRepository = processoRepository;
+        this.tenant = tenant;
     }
 
     // CREATE
     public MovimentacaoProcessual cadastrar(
             MovimentacaoProcessual movimentacao) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                movimentacao.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(movimentacao.getProcesso().getIdProcesso());
 
         movimentacao.setProcesso(processo);
 
@@ -39,13 +39,13 @@ public class MovimentacaoProcessualService {
 
     // READ
     public List<MovimentacaoProcessual> listarTodos() {
-        return movimentacaoRepository.findAll();
+        return movimentacaoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     // READ por ID
     public MovimentacaoProcessual buscarPorId(Long id) {
 
-        return movimentacaoRepository.findById(id)
+        return movimentacaoRepository.findByIdMovimentacaoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Movimentação processual não encontrada"));
@@ -62,10 +62,7 @@ public class MovimentacaoProcessualService {
                                 new RecursoNaoEncontradoException(
                                         "Movimentação processual não encontrada"));
 
-        ProcessoJuridico processo = processoRepository.findById(
-                movimentacao.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(movimentacao.getProcesso().getIdProcesso());
 
         existente.setData(movimentacao.getData());
         existente.setDescricao(movimentacao.getDescricao());
@@ -90,10 +87,7 @@ public class MovimentacaoProcessualService {
             Long idProcesso,
             MovimentacaoProcessual movimentacao) {
 
-        ProcessoJuridico processo = processoRepository.findById(idProcesso)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(idProcesso);
 
         movimentacao.setProcesso(processo);
 
