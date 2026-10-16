@@ -1,8 +1,6 @@
 package br.com.VixLegen.ProjetoVixLegen10.Exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,36 +13,20 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import java.time.OffsetDateTime;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final ApiErroFactory erros;
+
+    public GlobalExceptionHandler(ApiErroFactory erros) {
+        this.erros = erros;
+    }
 
     private ResponseEntity<Map<String, Object>> resposta(HttpStatus status, String codigo,
             String mensagem, HttpServletRequest request, Exception ex, Map<String, String> campos) {
-        String protocolo = UUID.randomUUID().toString();
-        // Nunca registrar body, token, CPF, nomes ou conteúdo de documentos.
-        if (status.is5xxServerError()) {
-            log.error("erroId={} status={} codigo={} metodo={} rota={}",
-                    protocolo, status.value(), codigo, request.getMethod(), request.getRequestURI(), ex);
-        } else {
-            log.warn("erroId={} status={} codigo={} metodo={} rota={} tipo={}",
-                    protocolo, status.value(), codigo, request.getMethod(), request.getRequestURI(),
-                    ex.getClass().getSimpleName());
-        }
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", OffsetDateTime.now().toString());
-        body.put("status", status.value());
-        body.put("codigo", codigo);
-        body.put("mensagem", mensagem);
-        body.put("erroId", protocolo);
-        body.put("rota", request.getRequestURI());
-        if (!campos.isEmpty()) body.put("campos", campos);
-        return ResponseEntity.status(status).body(body);
+        return ResponseEntity.status(status)
+                .body(erros.criar(status, codigo, mensagem, request, ex, campos));
     }
 
     @ExceptionHandler(CredenciaisInvalidasException.class)
