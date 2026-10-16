@@ -27,7 +27,7 @@ class IsolamentoOrganizacaoTest {
         assertTrue(svc.listarTodos().isEmpty());
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.buscarPorId(900L));
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.excluir(900L));
-        verify(repo).findByIdTarefaAndProcessoClienteEmpresaOrganizacaoIdEmpresa(900L, empresa);
+        verify(repo, times(2)).findByIdTarefaAndProcessoClienteEmpresaOrganizacaoIdEmpresa(900L, empresa);
         verify(repo, never()).findById(anyLong());
         verify(repo, never()).delete(any());
     }
@@ -40,7 +40,7 @@ class IsolamentoOrganizacaoTest {
         when(tenant.empresaAtualId()).thenReturn(empresa);
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.buscarPorId(901L));
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.excluir(901L));
-        verify(repo).findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(901L, empresa);
+        verify(repo, times(2)).findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(901L, empresa);
         verify(repo, never()).findById(anyLong());
         verify(repo, never()).delete(any());
     }
@@ -110,6 +110,7 @@ class IsolamentoOrganizacaoTest {
                 tenant, "Advogado Júnior");
         when(tenant.empresaAtualId()).thenReturn(empresa);
         assertTrue(svc.listarTodos().isEmpty());
+        when(tenant.usuarioDaEmpresa(900L)).thenThrow(new RecursoNaoEncontradoException("Usuário não encontrado"));
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.buscarPorId(900L));
         verify(repo).findByEmpresaOrganizacaoIdEmpresa(empresa);
         verify(tenant).usuarioDaEmpresa(900L);
