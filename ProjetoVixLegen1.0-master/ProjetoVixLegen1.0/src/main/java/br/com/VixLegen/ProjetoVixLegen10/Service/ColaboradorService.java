@@ -11,21 +11,24 @@ import java.util.List;
 public class ColaboradorService {
 
     private final ColaboradorRepository colaboradorRepository;
+    private final TenantAccessService tenant;
 
-    public ColaboradorService(ColaboradorRepository colaboradorRepository) {
+    public ColaboradorService(ColaboradorRepository colaboradorRepository, TenantAccessService tenant) {
         this.colaboradorRepository = colaboradorRepository;
+        this.tenant = tenant;
     }
 
     public Colaborador cadastrar(Colaborador colaborador) {
+        colaborador.setEmpresaOrganizacao(tenant.empresaAtual());
         return colaboradorRepository.save(colaborador);
     }
 
     public List<Colaborador> listarTodos() {
-        return colaboradorRepository.findAll();
+        return colaboradorRepository.findByEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public Colaborador buscarPorId(Long id) {
-        return colaboradorRepository.findById(id)
+        return colaboradorRepository.findByIdColaboradorAndEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Colaborador não encontrado"));
     }
