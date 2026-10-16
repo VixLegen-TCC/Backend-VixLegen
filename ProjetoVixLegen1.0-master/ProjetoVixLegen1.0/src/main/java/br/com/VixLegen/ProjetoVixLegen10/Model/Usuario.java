@@ -77,6 +77,12 @@ public class Usuario {
 
     private boolean ativo;
 
+    // Nulo em cadastros legados; a primeira emissão considera versão zero.
+    // Alterações de segurança e logout invalidam todos os tokens anteriores.
+    @Column(name = "auth_version")
+    private Long authVersion = 0L;
+
+
     @Lob
     @Column(columnDefinition = "LONGTEXT")
     @JsonIgnore
