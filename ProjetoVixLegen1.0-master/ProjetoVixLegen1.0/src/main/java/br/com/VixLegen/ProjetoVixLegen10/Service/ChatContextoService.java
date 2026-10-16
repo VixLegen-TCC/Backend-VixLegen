@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 @Service
@@ -81,7 +81,7 @@ public class ChatContextoService {
             }
             if (nome.endsWith(".pdf") && bytes.length >= 5
                     && new String(bytes, 0, 5, StandardCharsets.US_ASCII).equals("%PDF-")) {
-                try (var pdf = Loader.loadPDF(bytes)) {
+                try (var pdf = PDDocument.load(bytes)) {
                     if (pdf.getNumberOfPages() > 100) throw new RegraNegocioException("PDF acima de 100 páginas");
                     String texto = new PDFTextStripper().getText(pdf);
                     if (texto.isBlank()) throw new RegraNegocioException("PDF sem texto extraível; OCR ainda não disponível");
