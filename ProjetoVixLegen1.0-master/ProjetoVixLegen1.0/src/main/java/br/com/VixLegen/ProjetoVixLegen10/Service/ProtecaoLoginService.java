@@ -4,6 +4,10 @@ import br.com.VixLegen.ProjetoVixLegen10.Exception.TentativasLoginExcedidasExcep
 import org.springframework.stereotype.Service;
 import java.time.Clock;
 import java.util.Locale;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -65,7 +69,13 @@ public class ProtecaoLoginService {
 
     private String normalizar(String email) {
         // Não registrar e-mail nos logs do limitador.
-        return Integer.toHexString(email.trim().toLowerCase(Locale.ROOT).hashCode());
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(email.trim().toLowerCase(Locale.ROOT).getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 indisponível", e);
+        }
     }
 
     private String normalizarIp(String ip) {
