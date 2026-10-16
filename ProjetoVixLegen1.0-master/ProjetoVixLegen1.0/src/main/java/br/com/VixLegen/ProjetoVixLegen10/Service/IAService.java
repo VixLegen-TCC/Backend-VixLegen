@@ -33,6 +33,7 @@ public class IAService {
         ProcessoJuridico processo = tenant.processo(analise.getProcesso().getIdProcesso());
 
         analise.setProcesso(processo);
+        analise.setIdAnalise(null); // POST não reutiliza ID fornecido pelo cliente.
 
         return analiseRepository.save(analise);
     }
