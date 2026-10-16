@@ -21,17 +21,20 @@ public class DocumentoJuridicoService {
     private final ProcessoJuridicoRepository processoRepository;
     private final CategoriaDocumentoRepository categoriaRepository;
     private final TenantAccessService tenant;
+    private final SanitizadorMinuta sanitizador;
 
     public DocumentoJuridicoService(
             DocumentoJuridicoRepository documentoRepository,
             ProcessoJuridicoRepository processoRepository,
             CategoriaDocumentoRepository categoriaRepository,
-            TenantAccessService tenant) {
+            TenantAccessService tenant,
+            SanitizadorMinuta sanitizador) {
 
         this.documentoRepository = documentoRepository;
         this.processoRepository = processoRepository;
         this.categoriaRepository = categoriaRepository;
         this.tenant = tenant;
+        this.sanitizador = sanitizador;
     }
 
     public DocumentoJuridico cadastrar(
@@ -47,18 +50,19 @@ public class DocumentoJuridicoService {
     }
 
     public List<DocumentoJuridico> listarTodos() {
-        return documentoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
+        return documentoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId())
+                .stream().map(this::limparConteudo).toList();
     }
 
     public DocumentoJuridico buscarPorId(Long id) {
 
-        return documentoRepository
+        return limparConteudo(documentoRepository
                 .findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Documento não encontrado"
                         )
-                );
+                ));
     }
 
     public DocumentoJuridico atualizar(
@@ -86,7 +90,7 @@ public class DocumentoJuridicoService {
         tenant.processo(idProcesso);
 
         return documentoRepository
-                .findByProcessoIdProcesso(idProcesso);
+                .findByProcessoIdProcesso(idProcesso).stream().map(this::limparConteudo).toList();
     }
 
     public DocumentoJuridico anexar(
@@ -117,6 +121,11 @@ public class DocumentoJuridicoService {
         return documentoRepository.save(documento);
     }
 
+    private DocumentoJuridico limparConteudo(DocumentoJuridico documento) {
+        documento.setConteudo(sanitizador.limpar(documento.getConteudo()));
+        return documento;
+    }
+
     private void aplicarDados(
             DocumentoJuridico documento,
             DocumentoJuridicoRequest request) {
@@ -133,7 +142,7 @@ public class DocumentoJuridicoService {
                 );
 
         documento.setNome(request.getNome());
-        documento.setConteudo(request.getConteudo());
+        documento.setConteudo(sanitizador.limpar(request.getConteudo()));
         documento.setTipoArquivo(
                 request.getTipoArquivo() == null
                         ? "text/html"
