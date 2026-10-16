@@ -33,6 +33,7 @@ public class MovimentacaoProcessualService {
         ProcessoJuridico processo = tenant.processo(movimentacao.getProcesso().getIdProcesso());
 
         movimentacao.setProcesso(processo);
+        movimentacao.setIdMovimentacao(null); // POST força novo registro.
 
         return movimentacaoRepository.save(movimentacao);
     }
@@ -90,6 +91,7 @@ public class MovimentacaoProcessualService {
         ProcessoJuridico processo = tenant.processo(idProcesso);
 
         movimentacao.setProcesso(processo);
+        movimentacao.setIdMovimentacao(null); // POST força novo registro.
 
         return movimentacaoRepository.save(movimentacao);
     }
