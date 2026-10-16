@@ -67,6 +67,14 @@ public class GlobalExceptionHandler {
                 ? "Erro interno. Informe o erroId ao suporte" : "Parâmetros inválidos", req, ex, Map.of());
     }
 
+    @ExceptionHandler(TentativasLoginExcedidasException.class)
+    public ResponseEntity<Map<String, Object>> tentativas(TentativasLoginExcedidasException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", "900")
+                .body(erros.criar(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_BLOQUEADO",
+                        ex.getMessage(), req, ex, Map.of()));
+    }
+
     @ExceptionHandler(CredenciaisInvalidasException.class)
     public ResponseEntity<Map<String, Object>> credenciais(CredenciaisInvalidasException ex, HttpServletRequest req) {
         return resposta(HttpStatus.UNAUTHORIZED, "CREDENCIAIS_INVALIDAS", "Credenciais inválidas", req, ex, Map.of());
