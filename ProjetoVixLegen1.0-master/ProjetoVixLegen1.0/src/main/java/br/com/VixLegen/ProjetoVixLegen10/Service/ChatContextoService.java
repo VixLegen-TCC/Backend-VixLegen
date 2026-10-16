@@ -2,6 +2,8 @@ package br.com.VixLegen.ProjetoVixLegen10.Service;
 
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
+import br.com.VixLegen.ProjetoVixLegen10.Exception.ArquivoInvalidoException;
+import br.com.VixLegen.ProjetoVixLegen10.Exception.ArquivoMuitoGrandeException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.*;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.DocumentoJuridicoRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.NotificacaoRepository;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.nio.charset.CodingErrorAction;
 import java.util.Locale;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -71,26 +75,31 @@ public class ChatContextoService {
     }
 
     public String extrair(MultipartFile arquivo) {
-        if (arquivo == null || arquivo.isEmpty()) throw new RegraNegocioException("Selecione um arquivo");
-        if (arquivo.getSize() > 10L * 1024 * 1024) throw new RegraNegocioException("Limite de 10 MB por arquivo");
+        if (arquivo == null || arquivo.isEmpty()) throw new ArquivoInvalidoException("Selecione um arquivo");
+        if (arquivo.getSize() > 10L * 1024 * 1024) throw new ArquivoMuitoGrandeException("Limite de 10 MB por arquivo");
         String nome = arquivo.getOriginalFilename() == null ? "" : arquivo.getOriginalFilename().toLowerCase(Locale.ROOT);
         try {
             byte[] bytes = arquivo.getBytes();
             if (nome.endsWith(".txt")) {
-                return limitar(new String(bytes, StandardCharsets.UTF_8));
+                String texto = StandardCharsets.UTF_8.newDecoder()
+                        .onMalformedInput(CodingErrorAction.REPORT)
+                        .onUnmappableCharacter(CodingErrorAction.REPORT)
+                        .decode(ByteBuffer.wrap(bytes)).toString();
+                if (texto.isBlank()) throw new ArquivoInvalidoException("Arquivo de texto vazio");
+                return limitar(texto);
             }
             if (nome.endsWith(".pdf") && bytes.length >= 5
                     && new String(bytes, 0, 5, StandardCharsets.US_ASCII).equals("%PDF-")) {
                 try (var pdf = PDDocument.load(bytes)) {
-                    if (pdf.getNumberOfPages() > 100) throw new RegraNegocioException("PDF acima de 100 páginas");
+                    if (pdf.getNumberOfPages() > 100) throw new ArquivoInvalidoException("PDF acima de 100 páginas");
                     String texto = new PDFTextStripper().getText(pdf);
-                    if (texto.isBlank()) throw new RegraNegocioException("PDF sem texto extraível; OCR ainda não disponível");
+                    if (texto.isBlank()) throw new ArquivoInvalidoException("PDF sem texto extraível; OCR ainda não disponível");
                     return limitar(texto);
                 }
             }
-            throw new RegraNegocioException("Formato não suportado. Use PDF pesquisável ou TXT");
+            throw new ArquivoInvalidoException("Formato não suportado. Use PDF pesquisável ou TXT");
         } catch (IOException ex) {
-            throw new RegraNegocioException("Não foi possível ler o arquivo");
+            throw new ArquivoInvalidoException("Arquivo corrompido ou texto inválido");
         }
     }
 

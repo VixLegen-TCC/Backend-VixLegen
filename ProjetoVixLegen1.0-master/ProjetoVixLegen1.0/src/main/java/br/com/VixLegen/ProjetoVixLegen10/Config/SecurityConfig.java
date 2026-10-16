@@ -134,7 +134,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             Converter<Jwt, ? extends AbstractAuthenticationToken>
-                    jwtAuthenticationConverter) throws Exception {
+                    jwtAuthenticationConverter,
+            ApiSegurancaHandler apiSegurancaHandler) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -236,8 +237,13 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated()
                 )
-                .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(jwt ->
+                .exceptionHandling(erros -> erros
+                        .authenticationEntryPoint(apiSegurancaHandler)
+                        .accessDeniedHandler(apiSegurancaHandler))
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .authenticationEntryPoint(apiSegurancaHandler)
+                        .accessDeniedHandler(apiSegurancaHandler)
+                        .jwt(jwt ->
                                 jwt.jwtAuthenticationConverter(
                                         jwtAuthenticationConverter
                                 )
