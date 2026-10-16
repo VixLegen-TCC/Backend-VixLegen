@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,15 +26,19 @@ class ProtecaoLoginServiceTest {
 
     @Test
     void bloqueioExpiraDepoisDaJanela() {
-        ProtecaoLoginService svc = new ProtecaoLoginService(
-                Clock.fixed(agora, ZoneOffset.UTC));
+        class RelogioMutavel extends Clock {
+            Instant instante = agora;
+            @Override public ZoneId getZone() { return ZoneOffset.UTC; }
+            @Override public Clock withZone(ZoneId zone) { return this; }
+            @Override public Instant instant() { return instante; }
+        }
+        RelogioMutavel relogio = new RelogioMutavel();
+        ProtecaoLoginService svc = new ProtecaoLoginService(relogio);
         for (int i = 0; i < 5; i++) svc.falha("teste@exemplo.com", "127.0.0.1");
         assertThrows(TentativasLoginExcedidasException.class,
                 () -> svc.verificar("teste@exemplo.com", "127.0.0.1"));
-        // Uma nova instância representa o reinício; o bloqueio em memória não é persistente.
-        ProtecaoLoginService depois = new ProtecaoLoginService(
-                Clock.offset(Clock.fixed(agora, ZoneOffset.UTC), Duration.ofMinutes(16)));
-        assertDoesNotThrow(() -> depois.verificar("teste@exemplo.com", "127.0.0.1"));
+        relogio.instante = agora.plus(Duration.ofMinutes(16));
+        assertDoesNotThrow(() -> svc.verificar("teste@exemplo.com", "127.0.0.1"));
     }
 
     @Test
