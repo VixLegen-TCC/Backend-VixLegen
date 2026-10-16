@@ -1,0 +1,4 @@
+# Logs locais e arquivos gerados em runtime
+*.log
+**/logs/
+*.log.*
