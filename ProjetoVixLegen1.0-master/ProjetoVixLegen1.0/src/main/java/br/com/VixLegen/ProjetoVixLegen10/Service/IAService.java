@@ -55,7 +55,7 @@ public class IAService {
             Long id,
             IA analise) {
 
-        IA existente = analiseRepository.findById(id)
+        IA existente = analiseRepository.findByIdAnaliseAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Análise de IA não encontrada"));
 
@@ -89,7 +89,7 @@ public class IAService {
     // DELETE
     public void excluir(Long id) {
 
-        IA analise = analiseRepository.findById(id)
+        IA analise = analiseRepository.findByIdAnaliseAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Análise de IA não encontrada"));
 
