@@ -57,7 +57,7 @@ public class MovimentacaoProcessualService {
             MovimentacaoProcessual movimentacao) {
 
         MovimentacaoProcessual existente =
-                movimentacaoRepository.findById(id)
+                movimentacaoRepository.findByIdMovimentacaoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Movimentação processual não encontrada"));
@@ -75,7 +75,7 @@ public class MovimentacaoProcessualService {
     public void excluir(Long id) {
 
         MovimentacaoProcessual movimentacao =
-                movimentacaoRepository.findById(id)
+                movimentacaoRepository.findByIdMovimentacaoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Movimentação processual não encontrada"));
