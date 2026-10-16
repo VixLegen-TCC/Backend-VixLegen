@@ -37,6 +37,7 @@ public class NotificacaoService {
         Usuario usuario = tenant.usuarioDaEmpresa(notificacao.getUsuario().getIdUsuario());
 
         notificacao.setUsuario(usuario);
+        notificacao.setIdNotificacao(null); // POST força novo registro.
 
         if (notificacao.getDataEnvio() == null) {
             notificacao.setDataEnvio(LocalDateTime.now());
