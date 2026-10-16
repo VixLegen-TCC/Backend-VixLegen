@@ -22,6 +22,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByCpf(String cpf);
 
     List<Usuario> findByAtivoTrue();
+    List<Usuario> findByEmpresaOrganizacaoIdEmpresa(Long empresaId);
+    List<Usuario> findByAtivoTrueAndEmpresaOrganizacaoIdEmpresa(Long empresaId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Usuario u set u.authVersion = COALESCE(u.authVersion, 0) + 1 where u.idUsuario = :id")
