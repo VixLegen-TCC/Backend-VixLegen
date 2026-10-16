@@ -215,11 +215,17 @@ public class SecurityConfig {
                                 "/**"
                         ).hasAuthority("SCOPE_editar")
 
+                        // Tarefa é uma atividade operacional: quem pode editar
+                        // também pode removê-la. A Service valida a empresa da tarefa.
+                        // Mantém compatibilidade com perfis que já tinham "excluir".
+                        .requestMatchers(HttpMethod.DELETE, "/tarefas/*")
+                        .hasAnyAuthority("SCOPE_editar", "SCOPE_excluir")
+
+                        // Exclusão de processos e clientes continua mais restrita.
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/clientes/**",
-                                "/processos/**",
-                                "/tarefas/**"
+                                "/processos/**"
                         ).hasAuthority("SCOPE_excluir")
 
                         .requestMatchers(

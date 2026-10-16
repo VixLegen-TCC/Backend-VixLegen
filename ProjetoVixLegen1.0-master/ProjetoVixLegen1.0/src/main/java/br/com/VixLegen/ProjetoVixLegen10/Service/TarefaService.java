@@ -22,15 +22,18 @@ public class TarefaService {
     private final TarefaRepository tarefaRepository;
     private final ProcessoJuridicoRepository processoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TenantAccessService tenant;
 
     public TarefaService(
             TarefaRepository tarefaRepository,
             ProcessoJuridicoRepository processoRepository,
-            UsuarioRepository usuarioRepository) {
+            UsuarioRepository usuarioRepository,
+            TenantAccessService tenant) {
 
         this.tarefaRepository = tarefaRepository;
         this.processoRepository = processoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.tenant = tenant;
     }
 
     public Tarefa cadastrar(TarefaRequest request) {
@@ -119,10 +122,15 @@ public class TarefaService {
         return tarefaRepository.save(existente);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public void excluir(Long id) {
-        tarefaRepository.delete(
-                buscarPorId(id)
-        );
+        Tarefa tarefa = buscarPorId(id);
+
+        // O usuário pode colaborar em tarefas da própria organização,
+        // mas jamais excluir tarefas de outra empresa, mesmo conhecendo o ID.
+        tenant.processo(tarefa.getProcesso().getIdProcesso());
+
+        tarefaRepository.delete(tarefa);
     }
 
     public Tarefa alterarStatus(
