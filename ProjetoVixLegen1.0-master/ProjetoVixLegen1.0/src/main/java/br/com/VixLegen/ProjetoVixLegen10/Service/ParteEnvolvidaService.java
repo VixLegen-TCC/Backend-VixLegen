@@ -55,7 +55,7 @@ public class ParteEnvolvidaService {
             ParteEnvolvida parte) {
 
         ParteEnvolvida existente =
-                parteRepository.findById(id)
+                parteRepository.findByIdParteAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Parte envolvida não encontrada"));
@@ -75,7 +75,7 @@ public class ParteEnvolvidaService {
     public void excluir(Long id) {
 
         ParteEnvolvida parte =
-                parteRepository.findById(id)
+                parteRepository.findByIdParteAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Parte envolvida não encontrada"));
