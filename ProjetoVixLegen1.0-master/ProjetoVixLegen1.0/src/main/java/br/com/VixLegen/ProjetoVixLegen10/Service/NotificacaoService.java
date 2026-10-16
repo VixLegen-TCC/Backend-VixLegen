@@ -18,23 +18,23 @@ public class NotificacaoService {
     private final NotificacaoRepository notificacaoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AlertaPrazoService alertaPrazoService;
+    private final TenantAccessService tenant;
 
     public NotificacaoService(
             NotificacaoRepository notificacaoRepository,
             UsuarioRepository usuarioRepository,
-            AlertaPrazoService alertaPrazoService) {
+            AlertaPrazoService alertaPrazoService,
+            TenantAccessService tenant) {
 
         this.notificacaoRepository = notificacaoRepository;
         this.usuarioRepository = usuarioRepository;
         this.alertaPrazoService = alertaPrazoService;
+        this.tenant = tenant;
     }
 
     public Notificacao cadastrar(Notificacao notificacao) {
 
-        Usuario usuario = usuarioRepository.findById(
-                notificacao.getUsuario().getIdUsuario()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Usuário não encontrado"));
+        Usuario usuario = tenant.usuarioDaEmpresa(notificacao.getUsuario().getIdUsuario());
 
         notificacao.setUsuario(usuario);
 
@@ -46,11 +46,14 @@ public class NotificacaoService {
     }
 
     public List<Notificacao> listarTodos() {
-        return notificacaoRepository.findAll();
+        return notificacaoRepository.findByUsuarioEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public List<Notificacao> listarPorUsuario(Long idUsuario) {
 
+        if (!tenant.usuarioAtualId().equals(idUsuario)) {
+            throw new RecursoNaoEncontradoException("Notificações não encontradas");
+        }
         alertaPrazoService.gerarParaUsuario(idUsuario);
         garantirNotificacoesIniciais(idUsuario);
 
@@ -117,7 +120,7 @@ public class NotificacaoService {
 
     public Notificacao buscarPorId(Long id) {
 
-        return notificacaoRepository.findById(id)
+        return notificacaoRepository.findByIdNotificacaoAndUsuarioEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Notificação não encontrada"));
     }
@@ -128,10 +131,7 @@ public class NotificacaoService {
 
         Notificacao existente = buscarPorId(id);
 
-        Usuario usuario = usuarioRepository.findById(
-                notificacao.getUsuario().getIdUsuario()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Usuário não encontrado"));
+        Usuario usuario = tenant.usuarioDaEmpresa(notificacao.getUsuario().getIdUsuario());
 
         existente.setMensagem(notificacao.getMensagem());
         existente.setDataEnvio(notificacao.getDataEnvio());
@@ -151,7 +151,8 @@ public class NotificacaoService {
 
         Notificacao notificacao = buscarPorId(id);
 
-        if (!notificacao.getUsuario().getIdUsuario().equals(idUsuario)) {
+        if (!tenant.usuarioAtualId().equals(idUsuario)
+                || !notificacao.getUsuario().getIdUsuario().equals(idUsuario)) {
             throw new RegraNegocioException(
                     "A notificação não pertence ao usuário autenticado"
             );
