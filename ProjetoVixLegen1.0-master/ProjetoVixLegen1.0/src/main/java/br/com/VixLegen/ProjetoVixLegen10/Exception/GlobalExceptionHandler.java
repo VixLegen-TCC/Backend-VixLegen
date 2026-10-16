@@ -1,74 +1,104 @@
 package br.com.VixLegen.ProjetoVixLegen10.Exception;
 
-import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import java.util.HashMap;
+import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private ResponseEntity<Map<String, Object>> resposta(HttpStatus status, String codigo,
+            String mensagem, HttpServletRequest request, Exception ex, Map<String, String> campos) {
+        String protocolo = UUID.randomUUID().toString();
+        // Nunca registrar body, token, CPF, nomes ou conteúdo de documentos.
+        if (status.is5xxServerError()) {
+            log.error("erroId={} status={} codigo={} metodo={} rota={}",
+                    protocolo, status.value(), codigo, request.getMethod(), request.getRequestURI(), ex);
+        } else {
+            log.warn("erroId={} status={} codigo={} metodo={} rota={} tipo={}",
+                    protocolo, status.value(), codigo, request.getMethod(), request.getRequestURI(),
+                    ex.getClass().getSimpleName());
+        }
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", OffsetDateTime.now().toString());
+        body.put("status", status.value());
+        body.put("codigo", codigo);
+        body.put("mensagem", mensagem);
+        body.put("erroId", protocolo);
+        body.put("rota", request.getRequestURI());
+        if (!campos.isEmpty()) body.put("campos", campos);
+        return ResponseEntity.status(status).body(body);
+    }
 
     @ExceptionHandler(CredenciaisInvalidasException.class)
-    public ResponseEntity<String> credenciaisInvalidas(
-            CredenciaisInvalidasException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, Object>> credenciais(CredenciaisInvalidasException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.UNAUTHORIZED, "CREDENCIAIS_INVALIDAS", "Credenciais inválidas", req, ex, Map.of());
     }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
-    public ResponseEntity<String> recursoNaoEncontrado(
-            RecursoNaoEncontradoException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, Object>> naoEncontrado(RecursoNaoEncontradoException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.NOT_FOUND, "RECURSO_NAO_ENCONTRADO", ex.getMessage(), req, ex, Map.of());
     }
 
     @ExceptionHandler(RegraNegocioException.class)
-    public ResponseEntity<String> regraNegocio(
-            RegraNegocioException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
+    public ResponseEntity<Map<String, Object>> negocio(RegraNegocioException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.BAD_REQUEST, "REGRA_NEGOCIO", ex.getMessage(), req, ex, Map.of());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<String> conflitoIntegridade(
-            DataIntegrityViolationException ex) {
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(
-                        "Operação não permitida: valor duplicado "
-                                + "ou registro vinculado"
-                );
+    public ResponseEntity<Map<String, Object>> conflito(DataIntegrityViolationException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.CONFLICT, "CONFLITO_INTEGRIDADE",
+                "Valor duplicado ou registro vinculado; verifique os dados", req, ex, Map.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> tratarErrosValidacao(
-            MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, Object>> validacao(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        Map<String, String> campos = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(e ->
+                campos.putIfAbsent(e.getField(), e.getDefaultMessage() == null ? "Valor inválido" : e.getDefaultMessage()));
+        return resposta(HttpStatus.BAD_REQUEST, "VALIDACAO", "Há campos inválidos", req, ex, campos);
+    }
 
-        Map<String, String> erros = new HashMap<>();
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class})
+    public ResponseEntity<Map<String, Object>> entrada(Exception ex, HttpServletRequest req) {
+        return resposta(HttpStatus.BAD_REQUEST, "REQUISICAO_INVALIDA", "Corpo ou parâmetros inválidos", req, ex, Map.of());
+    }
 
-        ex.getBindingResult()
-                .getFieldErrors()
-                .forEach(erro ->
-                        erros.put(
-                                erro.getField(),
-                                erro.getDefaultMessage()
-                        )
-                );
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> proibido(AccessDeniedException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.FORBIDDEN, "ACESSO_NEGADO", "Você não tem permissão", req, ex, Map.of());
+    }
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(erros);
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> uploadGrande(MaxUploadSizeExceededException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.PAYLOAD_TOO_LARGE, "ARQUIVO_GRANDE", "Arquivo acima do limite permitido", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> metodo(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.METHOD_NOT_ALLOWED, "METODO_INVALIDO", "Método HTTP não permitido", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> inesperado(Exception ex, HttpServletRequest req) {
+        return resposta(HttpStatus.INTERNAL_SERVER_ERROR, "ERRO_INTERNO",
+                "Erro interno. Informe o erroId ao suporte", req, ex, Map.of());
     }
 }
