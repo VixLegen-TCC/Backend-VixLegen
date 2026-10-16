@@ -46,6 +46,10 @@ public class ValidadorContaJwt implements OAuth2TokenValidator<Jwt> {
             if (!(versaoToken instanceof Number v) || v.longValue() != versaoAtual) return invalido();
 
             Categoria categoria = usuario.getCategoria();
+            Object categoriaToken = token.getClaims().get("codigoCategoria");
+            if (!(categoriaToken instanceof Number n)
+                    || !Objects.equals(n.longValue(), categoria.getCodigoCategoria())) return invalido();
+
             String perfil = PermissoesJwt.perfil(categoria);
             if (perfil == null || !Objects.equals(perfil, token.getClaimAsString("role"))
                     || !Objects.equals(PermissoesJwt.escopos(categoria), token.getClaimAsString("scope"))) {
