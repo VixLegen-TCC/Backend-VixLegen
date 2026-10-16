@@ -20,15 +20,18 @@ public class DocumentoJuridicoService {
     private final DocumentoJuridicoRepository documentoRepository;
     private final ProcessoJuridicoRepository processoRepository;
     private final CategoriaDocumentoRepository categoriaRepository;
+    private final TenantAccessService tenant;
 
     public DocumentoJuridicoService(
             DocumentoJuridicoRepository documentoRepository,
             ProcessoJuridicoRepository processoRepository,
-            CategoriaDocumentoRepository categoriaRepository) {
+            CategoriaDocumentoRepository categoriaRepository,
+            TenantAccessService tenant) {
 
         this.documentoRepository = documentoRepository;
         this.processoRepository = processoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.tenant = tenant;
     }
 
     public DocumentoJuridico cadastrar(
@@ -44,13 +47,13 @@ public class DocumentoJuridicoService {
     }
 
     public List<DocumentoJuridico> listarTodos() {
-        return documentoRepository.findAll();
+        return documentoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public DocumentoJuridico buscarPorId(Long id) {
 
         return documentoRepository
-                .findById(id)
+                .findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Documento não encontrado"
@@ -80,11 +83,7 @@ public class DocumentoJuridicoService {
     public List<DocumentoJuridico> listarPorProcesso(
             Long idProcesso) {
 
-        if (!processoRepository.existsById(idProcesso)) {
-            throw new RecursoNaoEncontradoException(
-                    "Processo jurídico não encontrado"
-            );
-        }
+        tenant.processo(idProcesso);
 
         return documentoRepository
                 .findByProcessoIdProcesso(idProcesso);
@@ -122,14 +121,7 @@ public class DocumentoJuridicoService {
             DocumentoJuridico documento,
             DocumentoJuridicoRequest request) {
 
-        ProcessoJuridico processo =
-                processoRepository.findById(
-                        request.getProcessoId()
-                ).orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"
-                        )
-                );
+        ProcessoJuridico processo = tenant.processo(request.getProcessoId());
 
         CategoriaDocumento categoria =
                 categoriaRepository.findById(
