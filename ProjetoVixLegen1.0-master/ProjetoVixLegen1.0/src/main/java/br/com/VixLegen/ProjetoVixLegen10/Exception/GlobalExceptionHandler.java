@@ -1,6 +1,14 @@
 package br.com.VixLegen.ProjetoVixLegen10.Exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +35,33 @@ public class GlobalExceptionHandler {
             String mensagem, HttpServletRequest request, Exception ex, Map<String, String> campos) {
         return ResponseEntity.status(status)
                 .body(erros.criar(status, codigo, mensagem, request, ex, campos));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> autenticacao(AuthenticationException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.UNAUTHORIZED, "AUTENTICACAO_NECESSARIA",
+                "Faça login novamente para continuar", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> tipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        String campo = ex.getName() == null ? "parametro" : ex.getName();
+        if (!campo.matches("[A-Za-z][A-Za-z0-9_]{0,60}")) campo = "parametro";
+        return resposta(HttpStatus.BAD_REQUEST, "PARAMETRO_INVALIDO", "Parâmetro com tipo inválido",
+                req, ex, Map.of(campo, "Formato inválido"));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> restricoes(ConstraintViolationException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.BAD_REQUEST, "VALIDACAO",
+                "Parâmetros fora das regras permitidas", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<Map<String, Object>> validacaoMetodo(HandlerMethodValidationException ex, HttpServletRequest req) {
+        HttpStatus status = ex.isForReturnValue() ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
+        return resposta(status, "VALIDACAO", status.is5xxServerError()
+                ? "Erro interno. Informe o erroId ao suporte" : "Parâmetros inválidos", req, ex, Map.of());
     }
 
     @ExceptionHandler(CredenciaisInvalidasException.class)
