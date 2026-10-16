@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
         return resposta(HttpStatus.BAD_REQUEST, "VALIDACAO", "Há campos inválidos", req, ex, campos);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class})
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
     public ResponseEntity<Map<String, Object>> entrada(Exception ex, HttpServletRequest req) {
         return resposta(HttpStatus.BAD_REQUEST, "REQUISICAO_INVALIDA", "Corpo ou parâmetros inválidos", req, ex, Map.of());
     }
@@ -111,6 +111,50 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> metodo(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
         return resposta(HttpStatus.METHOD_NOT_ALLOWED, "METODO_INVALIDO", "Método HTTP não permitido", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(ArquivoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> arquivoInvalido(ArquivoInvalidoException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.UNPROCESSABLE_ENTITY, "ARQUIVO_INVALIDO", ex.getMessage(), req, ex, Map.of());
+    }
+
+    @ExceptionHandler(ArquivoMuitoGrandeException.class)
+    public ResponseEntity<Map<String, Object>> arquivoGrande(ArquivoMuitoGrandeException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.PAYLOAD_TOO_LARGE, "ARQUIVO_GRANDE", ex.getMessage(), req, ex, Map.of());
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<Map<String, Object>> multipart(MultipartException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.BAD_REQUEST, "MULTIPART_INVALIDO", "Envio de arquivo inválido", req, ex, Map.of());
+    }
+
+    @ExceptionHandler({ConflitoRecursoException.class})
+    public ResponseEntity<Map<String, Object>> conflitoRecurso(ConflitoRecursoException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.CONFLICT, "CONFLITO_RECURSO", ex.getMessage(), req, ex, Map.of());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> media(HttpMediaTypeNotSupportedException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "TIPO_MIDIA_INVALIDO",
+                "Tipo de conteúdo não suportado", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    public ResponseEntity<Map<String, Object>> naoAceitavel(HttpMediaTypeNotAcceptableException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.NOT_ACCEPTABLE, "FORMATO_RESPOSTA_INVALIDO",
+                "Formato de resposta não disponível", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(ServicoIAIndisponivelException.class)
+    public ResponseEntity<Map<String, Object>> indisponivel(ServicoIAIndisponivelException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.SERVICE_UNAVAILABLE, "IA_INDISPONIVEL",
+                "Serviço de IA temporariamente indisponível", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(TempoLimiteIAException.class)
+    public ResponseEntity<Map<String, Object>> tempoIA(TempoLimiteIAException ex, HttpServletRequest req) {
+        return resposta(HttpStatus.GATEWAY_TIMEOUT, "IA_TEMPO_ESGOTADO",
+                "A análise demorou demais. Tente novamente", req, ex, Map.of());
     }
 
     @ExceptionHandler(Exception.class)
