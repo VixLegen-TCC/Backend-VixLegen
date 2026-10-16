@@ -6,6 +6,7 @@ import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.UsuarioRequest;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Response.UsuarioResponse;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
+import br.com.VixLegen.ProjetoVixLegen10.Exception.ConflitoRecursoException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Categoria;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Empresa;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Usuario;
@@ -325,15 +326,11 @@ public class UsuarioService {
             String cpf) {
 
         if (usuarioRepository.existsByEmailIgnoreCase(email)) {
-            throw new RegraNegocioException(
-                    "E-mail já cadastrado"
-            );
+            throw new ConflitoRecursoException("E-mail já cadastrado", "email");
         }
 
         if (usuarioRepository.existsByCpf(cpf)) {
-            throw new RegraNegocioException(
-                    "CPF já cadastrado"
-            );
+            throw new ConflitoRecursoException("CPF já cadastrado", "cpf");
         }
     }
 
