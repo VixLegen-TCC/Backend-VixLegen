@@ -20,6 +20,7 @@ public class ColaboradorService {
 
     public Colaborador cadastrar(Colaborador colaborador) {
         colaborador.setEmpresaOrganizacao(tenant.empresaAtual());
+        colaborador.setIdColaborador(null);
         return colaboradorRepository.save(colaborador);
     }
 
@@ -35,7 +36,7 @@ public class ColaboradorService {
 
     public Colaborador atualizar(Long id, Colaborador colaborador) {
 
-        Colaborador existente = colaboradorRepository.findById(id)
+        Colaborador existente = colaboradorRepository.findByIdColaboradorAndEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Colaborador não encontrado"));
 
@@ -51,7 +52,7 @@ public class ColaboradorService {
 
     public void excluir(Long id) {
 
-        Colaborador colaborador = colaboradorRepository.findById(id)
+        Colaborador colaborador = colaboradorRepository.findByIdColaboradorAndEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Colaborador não encontrado"));
 
