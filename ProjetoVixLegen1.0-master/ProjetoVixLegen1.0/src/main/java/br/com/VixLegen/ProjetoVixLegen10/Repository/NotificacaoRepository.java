@@ -10,4 +10,6 @@ public interface NotificacaoRepository extends JpaRepository<Notificacao, Long> 
     List<Notificacao> findByUsuarioIdUsuarioOrderByDataEnvioDesc(Long idUsuario);
 
     boolean existsByChaveAlerta(String chaveAlerta);
+    List<Notificacao> findByUsuarioEmpresaOrganizacaoIdEmpresa(Long empresaId);
+    java.util.Optional<Notificacao> findByIdNotificacaoAndUsuarioEmpresaOrganizacaoIdEmpresa(Long id, Long empresaId);
 }
