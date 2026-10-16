@@ -82,13 +82,6 @@ public class AuthService {
                 .issuedAt(agora)
                 .expiresAt(expiracao)
                 .subject(usuario.getIdUsuario().toString())
-                .claim("email", usuario.getEmail())
-                .claim(
-                        "nome",
-                        usuario.getPrimeiroNome()
-                                + " "
-                                + usuario.getUltimoNome()
-                )
                 .claim("scope", PermissoesJwt.escopos(categoria))
                 .claim("authVersion", usuario.getAuthVersion() == null ? 0L : usuario.getAuthVersion());
 
