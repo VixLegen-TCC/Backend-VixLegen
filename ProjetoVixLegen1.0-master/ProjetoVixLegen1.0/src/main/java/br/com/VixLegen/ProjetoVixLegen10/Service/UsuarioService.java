@@ -27,18 +27,21 @@ public class UsuarioService {
     private final EmpresaRepository empresaRepository;
     private final PasswordEncoder passwordEncoder;
     private final String categoriaPublicaPadrao;
+    private final TenantAccessService tenant;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
             CategoriaRepository categoriaRepository,
             EmpresaRepository empresaRepository,
             PasswordEncoder passwordEncoder,
+            TenantAccessService tenant,
             @Value("${cadastro.categoria-padrao:Advogado Júnior}") String categoriaPublicaPadrao) {
 
         this.usuarioRepository = usuarioRepository;
         this.categoriaRepository = categoriaRepository;
         this.empresaRepository = empresaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tenant = tenant;
         this.categoriaPublicaPadrao = categoriaPublicaPadrao;
     }
 
@@ -68,7 +71,9 @@ public class UsuarioService {
                 categoria
         );
 
-        return salvarUsuarioComOrganizacao(usuario);
+        // Cadastros administrativos integram o escritório atual.
+        usuario.setEmpresaOrganizacao(tenant.empresaAtual());
+        return converterParaResponse(usuarioRepository.save(usuario));
     }
 
     @Transactional
@@ -130,7 +135,7 @@ public class UsuarioService {
     public List<UsuarioResponse> listarTodos() {
 
         return usuarioRepository
-                .findAll()
+                .findByEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId())
                 .stream()
                 .map(this::converterParaResponse)
                 .toList();
@@ -139,7 +144,7 @@ public class UsuarioService {
     public UsuarioResponse buscarPorId(Long id) {
 
         return converterParaResponse(
-                buscarEntidadePorId(id)
+                tenant.usuarioDaEmpresa(id)
         );
     }
 
@@ -148,7 +153,7 @@ public class UsuarioService {
             UsuarioAtualizacaoRequest request) {
 
         Usuario usuarioExistente =
-                buscarEntidadePorId(id);
+                tenant.usuarioDaEmpresa(id);
 
         if (!usuarioExistente
                 .getEmail()
@@ -227,8 +232,7 @@ public class UsuarioService {
             Long id,
             Long codigoCategoria) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = tenant.usuarioDaEmpresa(id);
 
         Categoria categoria =
                 buscarCategoria(codigoCategoria);
@@ -243,8 +247,7 @@ public class UsuarioService {
 
     public UsuarioResponse ativar(Long id) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = tenant.usuarioDaEmpresa(id);
 
         usuario.setAtivo(true);
         invalidarSessoes(usuario);
@@ -256,8 +259,7 @@ public class UsuarioService {
 
     public UsuarioResponse desativar(Long id) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = tenant.usuarioDaEmpresa(id);
 
         usuario.setAtivo(false);
         invalidarSessoes(usuario);
@@ -269,9 +271,11 @@ public class UsuarioService {
 
     public void excluir(Long id) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = tenant.usuarioDaEmpresa(id);
 
+        if (usuario.getIdUsuario().equals(tenant.usuarioAtualId())) {
+            throw new RegraNegocioException("Não é permitido excluir a própria conta por esta rota");
+        }
         usuarioRepository.delete(usuario);
     }
 
@@ -287,6 +291,7 @@ public class UsuarioService {
                                 )
                         );
 
+        tenant.usuarioDaEmpresa(usuario.getIdUsuario());
         return converterParaResponse(usuario);
     }
 
@@ -302,13 +307,14 @@ public class UsuarioService {
                                 )
                         );
 
+        tenant.usuarioDaEmpresa(usuario.getIdUsuario());
         return converterParaResponse(usuario);
     }
 
     public List<UsuarioResponse> listarAtivos() {
 
         return usuarioRepository
-                .findByAtivoTrue()
+                .findByAtivoTrueAndEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId())
                 .stream()
                 .map(this::converterParaResponse)
                 .toList();
@@ -400,8 +406,7 @@ public class UsuarioService {
 
     public Usuario buscarUsuarioAtivo(Long id) {
 
-        Usuario usuario =
-                buscarEntidadePorId(id);
+        Usuario usuario = tenant.usuarioDaEmpresa(id);
 
         if (!usuario.isAtivo()) {
             throw new RecursoNaoEncontradoException(
