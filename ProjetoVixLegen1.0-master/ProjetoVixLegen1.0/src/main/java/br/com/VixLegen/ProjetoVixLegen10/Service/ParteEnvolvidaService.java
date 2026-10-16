@@ -32,6 +32,7 @@ public class ParteEnvolvidaService {
         ProcessoJuridico processo = tenant.processo(parte.getProcesso().getIdProcesso());
 
         parte.setProcesso(processo);
+        parte.setIdParte(0L); // ID gerado é inicializado a zero.
 
         return parteRepository.save(parte);
     }
