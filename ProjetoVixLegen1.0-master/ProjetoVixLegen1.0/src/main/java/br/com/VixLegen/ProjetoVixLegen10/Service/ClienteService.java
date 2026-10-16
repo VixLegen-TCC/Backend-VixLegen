@@ -3,6 +3,7 @@ package br.com.VixLegen.ProjetoVixLegen10.Service;
 import br.com.VixLegen.ProjetoVixLegen10.DTOs.Request.ClienteRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RecursoNaoEncontradoException;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
+import br.com.VixLegen.ProjetoVixLegen10.Exception.ConflitoRecursoException;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Cliente;
 import br.com.VixLegen.ProjetoVixLegen10.Model.ProcessoJuridico;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Usuario;
@@ -198,9 +199,7 @@ public class ClienteService {
                             );
 
             if (cpfDuplicado) {
-                throw new RegraNegocioException(
-                        "CPF já cadastrado"
-                );
+                throw new ConflitoRecursoException("CPF já cadastrado", "cpf");
             }
         }
 
@@ -217,9 +216,7 @@ public class ClienteService {
                             );
 
             if (cnpjDuplicado) {
-                throw new RegraNegocioException(
-                        "CNPJ já cadastrado"
-                );
+                throw new ConflitoRecursoException("CNPJ já cadastrado", "cnpj");
             }
         }
     }
