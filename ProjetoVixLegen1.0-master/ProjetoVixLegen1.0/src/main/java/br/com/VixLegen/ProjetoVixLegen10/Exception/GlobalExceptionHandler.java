@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -65,6 +66,14 @@ public class GlobalExceptionHandler {
         HttpStatus status = ex.isForReturnValue() ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.BAD_REQUEST;
         return resposta(status, "VALIDACAO", status.is5xxServerError()
                 ? "Erro interno. Informe o erroId ao suporte" : "Parâmetros inválidos", req, ex, Map.of());
+    }
+
+    @ExceptionHandler(TentativasLoginExcedidasException.class)
+    public ResponseEntity<Map<String, Object>> tentativas(TentativasLoginExcedidasException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", "900")
+                .body(erros.criar(HttpStatus.TOO_MANY_REQUESTS, "LOGIN_BLOQUEADO",
+                        ex.getMessage(), req, ex, Map.of()));
     }
 
     @ExceptionHandler(CredenciaisInvalidasException.class)

@@ -1,0 +1,41 @@
+name: Backend JWT Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  junit:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-password
+          MYSQL_DATABASE: VixLegenDB
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-only-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+    env:
+      DB_USERNAME: root
+      DB_PASSWORD: ci-only-password
+      JWT_AUDIENCE: vixlegen-web
+    defaults:
+      run:
+        working-directory: ProjetoVixLegen1.0-master/ProjetoVixLegen1.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "26"
+          cache: maven
+      - name: Gerar chave somente no runner
+        run: echo "JWT_SECRET=$(openssl rand -hex 48)" >> "$GITHUB_ENV"
+      - name: Executar testes
+        run: mvn --batch-mode --no-transfer-progress test

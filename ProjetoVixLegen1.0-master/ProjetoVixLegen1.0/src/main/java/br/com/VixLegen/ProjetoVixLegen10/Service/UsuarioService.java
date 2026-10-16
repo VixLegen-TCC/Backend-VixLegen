@@ -174,6 +174,11 @@ public class UsuarioService {
             );
         }
 
+        if (!usuarioExistente.getEmail().equalsIgnoreCase(request.getEmail())) {
+            // O e-mail presente em sessões anteriores não deve permanecer vigente.
+            invalidarSessoes(usuarioExistente);
+        }
+
         usuarioExistente.setPrimeiroNome(
                 request.getPrimeiroNome()
         );
@@ -229,6 +234,7 @@ public class UsuarioService {
                 buscarCategoria(codigoCategoria);
 
         usuario.setCategoria(categoria);
+        invalidarSessoes(usuario);
 
         return converterParaResponse(
                 usuarioRepository.save(usuario)
@@ -241,6 +247,7 @@ public class UsuarioService {
                 buscarEntidadePorId(id);
 
         usuario.setAtivo(true);
+        invalidarSessoes(usuario);
 
         return converterParaResponse(
                 usuarioRepository.save(usuario)
@@ -253,6 +260,7 @@ public class UsuarioService {
                 buscarEntidadePorId(id);
 
         usuario.setAtivo(false);
+        invalidarSessoes(usuario);
 
         return converterParaResponse(
                 usuarioRepository.save(usuario)
@@ -360,6 +368,11 @@ public class UsuarioService {
         usuario.setCategoria(categoria);
 
         return usuario;
+    }
+
+    private void invalidarSessoes(Usuario usuario) {
+        Long versao = usuario.getAuthVersion();
+        usuario.setAuthVersion((versao == null ? 0L : versao) + 1L);
     }
 
     private Usuario buscarEntidadePorId(Long id) {

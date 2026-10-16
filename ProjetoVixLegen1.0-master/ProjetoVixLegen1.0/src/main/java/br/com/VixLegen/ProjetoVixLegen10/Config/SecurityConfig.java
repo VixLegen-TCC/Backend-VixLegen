@@ -12,6 +12,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -56,16 +57,15 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtDecoder jwtDecoder(SecretKey secretKey) {
+    public JwtDecoder jwtDecoder(SecretKey secretKey, br.com.VixLegen.ProjetoVixLegen10.Service.ValidadorContaJwt validadorContaJwt) {
 
         NimbusJwtDecoder decoder = NimbusJwtDecoder
                 .withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
 
-        decoder.setJwtValidator(
-                JwtValidators.createDefaultWithIssuer(ISSUER)
-        );
+        decoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+                JwtValidators.createDefaultWithIssuer(ISSUER), validadorContaJwt));
 
         return decoder;
     }
@@ -161,6 +161,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/error"
                         ).permitAll()
+
+                        // Todo usuário autenticado precisa poder encerrar sua sessão,
+                        // mesmo sem permissão de edição.
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").authenticated()
 
                         // Remover a própria foto não equivale a excluir registros
                         // do sistema. O controller obtém o usuário do JWT e

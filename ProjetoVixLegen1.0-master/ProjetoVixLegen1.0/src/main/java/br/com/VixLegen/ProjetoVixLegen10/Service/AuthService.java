@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -28,34 +28,42 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
     private final long expirationSeconds;
+    private final String audiencia;
+    private final ProtecaoLoginService protecao;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
-            @Value("${jwt.expiration-seconds:3600}") long expirationSeconds) {
+            ProtecaoLoginService protecao,
+            @Value("${jwt.expiration-seconds:3600}") long expirationSeconds,
+            @Value("${jwt.audience:vixlegen-web}") String audiencia) {
 
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
         this.expirationSeconds = expirationSeconds;
+        this.audiencia = audiencia;
+        this.protecao = protecao;
     }
 
-    public LoginResponse login(LoginRequest request) {
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request, String ipRemoto) {
 
         String email = request.getEmail().trim();
 
-        Usuario usuario = usuarioRepository
-                .findByEmailIgnoreCase(email)
-                .orElseThrow(this::credenciaisInvalidas);
+        protecao.verificar(email, ipRemoto);
 
-        if (!usuario.isAtivo()
-                || !passwordEncoder.matches(
-                        request.getSenha(),
-                        usuario.getSenhaHash())) {
-
+        Usuario usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
+        if (usuario == null || !usuario.isAtivo()
+                || usuario.getEmpresaOrganizacao() == null
+                || usuario.getCategoria() == null
+                || !passwordEncoder.matches(request.getSenha(), usuario.getSenhaHash())) {
+            protecao.falha(email, ipRemoto);
             throw credenciaisInvalidas();
         }
+
+        protecao.sucesso(email);
 
         Instant agora = Instant.now();
         Instant expiracao = agora.plus(
@@ -70,17 +78,12 @@ public class AuthService {
 
         JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
                 .issuer(ISSUER)
+                .audience(List.of(audiencia))
                 .issuedAt(agora)
                 .expiresAt(expiracao)
                 .subject(usuario.getIdUsuario().toString())
-                .claim("email", usuario.getEmail())
-                .claim(
-                        "nome",
-                        usuario.getPrimeiroNome()
-                                + " "
-                                + usuario.getUltimoNome()
-                )
-                .claim("scope", montarEscopos(categoria));
+                .claim("scope", PermissoesJwt.escopos(categoria))
+                .claim("authVersion", usuario.getAuthVersion() == null ? 0L : usuario.getAuthVersion());
 
         if (categoria != null) {
             claims.claim(
@@ -125,27 +128,11 @@ public class AuthService {
         );
     }
 
-    private String montarEscopos(Categoria categoria) {
-
-        if (categoria == null) {
-            return "";
+    @Transactional
+    public void logout(Long idUsuario) {
+        if (usuarioRepository.revogarSessoes(idUsuario) != 1) {
+            throw credenciaisInvalidas();
         }
-
-        List<String> escopos = new ArrayList<>();
-
-        if (categoria.isPermissaoVisualizar()) {
-            escopos.add("visualizar");
-        }
-
-        if (categoria.isPermissaoEditar()) {
-            escopos.add("editar");
-        }
-
-        if (categoria.isPermissaoExcluir()) {
-            escopos.add("excluir");
-        }
-
-        return String.join(" ", escopos);
     }
 
     private CredenciaisInvalidasException credenciaisInvalidas() {

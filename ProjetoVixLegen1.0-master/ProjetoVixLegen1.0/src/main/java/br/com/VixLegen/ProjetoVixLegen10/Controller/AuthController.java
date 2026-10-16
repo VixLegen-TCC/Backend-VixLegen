@@ -8,6 +8,7 @@ import br.com.VixLegen.ProjetoVixLegen10.DTOs.Response.UsuarioResponse;
 import br.com.VixLegen.ProjetoVixLegen10.Service.AuthService;
 import br.com.VixLegen.ProjetoVixLegen10.Service.UsuarioService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import br.com.VixLegen.ProjetoVixLegen10.Model.Usuario;
 import br.com.VixLegen.ProjetoVixLegen10.Repository.UsuarioRepository;
 import br.com.VixLegen.ProjetoVixLegen10.Exception.RegraNegocioException;
@@ -41,11 +42,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request, HttpServletRequest http) {
 
         return ResponseEntity.ok(
-                authService.login(request)
+                authService.login(request, http.getRemoteAddr())
         );
+    }
+
+    /**
+     * Invalida todas as sessões existentes da conta (inclusive em outros dispositivos).
+     * A revogação é imediata; não basta remover o token do navegador.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal Jwt jwt) {
+        authService.logout(Long.valueOf(jwt.getSubject()));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/cadastro")
