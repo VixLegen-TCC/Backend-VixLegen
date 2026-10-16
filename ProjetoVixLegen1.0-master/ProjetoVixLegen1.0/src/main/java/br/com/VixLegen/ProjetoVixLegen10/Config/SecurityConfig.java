@@ -190,6 +190,11 @@ public class SecurityConfig {
                                 "/usuarios/**"
                         ).hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/chat/contexto/**")
+                        .hasAuthority("SCOPE_visualizar")
+                        .requestMatchers(HttpMethod.POST, "/chat/contexto/arquivo")
+                        .hasAuthority("SCOPE_visualizar")
+
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/**"
