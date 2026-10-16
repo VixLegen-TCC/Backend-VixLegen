@@ -26,8 +26,8 @@ public class ClassificacaoProcessoService {
         this.classificacaoRepository =
                 classificacaoRepository;
 
-        this.processoRepository =
-                processoRepository;
+        this.processoRepository = processoRepository;
+        this.tenant = tenant;
     }
 
     public ClassificacaoProcesso cadastrar(
