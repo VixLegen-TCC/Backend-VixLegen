@@ -140,9 +140,12 @@ public class GlobalExceptionHandler {
         return resposta(HttpStatus.BAD_REQUEST, "MULTIPART_INVALIDO", "Envio de arquivo inválido", req, ex, Map.of());
     }
 
-    @ExceptionHandler({ConflitoRecursoException.class})
+    @ExceptionHandler(ConflitoRecursoException.class)
     public ResponseEntity<Map<String, Object>> conflitoRecurso(ConflitoRecursoException ex, HttpServletRequest req) {
-        return resposta(HttpStatus.CONFLICT, "CONFLITO_RECURSO", ex.getMessage(), req, ex, Map.of());
+        Map<String, String> campos = ex.getCampo() == null
+                ? Map.of() : Map.of(ex.getCampo(), ex.getMessage());
+        return resposta(HttpStatus.CONFLICT, "DADO_JA_CADASTRADO",
+                ex.getMessage(), req, ex, campos);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
