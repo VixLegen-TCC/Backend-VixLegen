@@ -13,4 +13,6 @@ public interface ClassificacaoProcessoRepository
     Optional<ClassificacaoProcesso> findByProcessoIdProcesso(Long idProcesso);
 
     List<ClassificacaoProcesso> findByStatus(StatusProcesso status);
+    List<ClassificacaoProcesso> findByProcessoClienteEmpresaOrganizacaoIdEmpresa(Long empresaId);
+    Optional<ClassificacaoProcesso> findByIdClassificacaoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(Long id, Long empresaId);
 }
