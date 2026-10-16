@@ -14,37 +14,38 @@ public class ParteEnvolvidaService {
 
     private final ParteEnvolvidaRepository parteRepository;
     private final ProcessoJuridicoRepository processoRepository;
+    private final TenantAccessService tenant;
 
     public ParteEnvolvidaService(
             ParteEnvolvidaRepository parteRepository,
-            ProcessoJuridicoRepository processoRepository) {
+            ProcessoJuridicoRepository processoRepository,
+            TenantAccessService tenant) {
 
         this.parteRepository = parteRepository;
         this.processoRepository = processoRepository;
+        this.tenant = tenant;
     }
 
     // CREATE
     public ParteEnvolvida cadastrar(ParteEnvolvida parte) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                parte.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(parte.getProcesso().getIdProcesso());
 
         parte.setProcesso(processo);
+        parte.setIdParte(0L); // ID gerado é inicializado a zero.
 
         return parteRepository.save(parte);
     }
 
     // READ - todos
     public List<ParteEnvolvida> listarTodos() {
-        return parteRepository.findAll();
+        return parteRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     // READ - por ID
     public ParteEnvolvida buscarPorId(Long id) {
 
-        return parteRepository.findById(id)
+        return parteRepository.findByIdParteAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Parte envolvida não encontrada"));
     }
@@ -55,15 +56,12 @@ public class ParteEnvolvidaService {
             ParteEnvolvida parte) {
 
         ParteEnvolvida existente =
-                parteRepository.findById(id)
+                parteRepository.findByIdParteAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Parte envolvida não encontrada"));
 
-        ProcessoJuridico processo = processoRepository.findById(
-                parte.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(parte.getProcesso().getIdProcesso());
 
         existente.setPosicaoCliente(parte.getPosicaoCliente());
         existente.setParteContraria(parte.getParteContraria());
@@ -78,7 +76,7 @@ public class ParteEnvolvidaService {
     public void excluir(Long id) {
 
         ParteEnvolvida parte =
-                parteRepository.findById(id)
+                parteRepository.findByIdParteAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                         .orElseThrow(() ->
                                 new RecursoNaoEncontradoException(
                                         "Parte envolvida não encontrada"));

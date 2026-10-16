@@ -16,16 +16,18 @@ public class ClassificacaoProcessoService {
 
     private final ClassificacaoProcessoRepository classificacaoRepository;
     private final ProcessoJuridicoRepository processoRepository;
+    private final TenantAccessService tenant;
 
     public ClassificacaoProcessoService(
             ClassificacaoProcessoRepository classificacaoRepository,
-            ProcessoJuridicoRepository processoRepository) {
+            ProcessoJuridicoRepository processoRepository,
+            TenantAccessService tenant) {
 
         this.classificacaoRepository =
                 classificacaoRepository;
 
-        this.processoRepository =
-                processoRepository;
+        this.processoRepository = processoRepository;
+        this.tenant = tenant;
     }
 
     public ClassificacaoProcesso cadastrar(
@@ -48,14 +50,14 @@ public class ClassificacaoProcessoService {
     public List<ClassificacaoProcesso>
     listarTodos() {
 
-        return classificacaoRepository.findAll();
+        return classificacaoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public ClassificacaoProcesso buscarPorId(
             Long id) {
 
         return classificacaoRepository
-                .findById(id)
+                .findByIdClassificacaoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Classificação não encontrada"
@@ -147,11 +149,6 @@ public class ClassificacaoProcessoService {
     private ProcessoJuridico buscarProcesso(
             Long idProcesso) {
 
-        return processoRepository
-                .findById(idProcesso)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"
-                        ));
+        return tenant.processo(idProcesso);
     }
 }

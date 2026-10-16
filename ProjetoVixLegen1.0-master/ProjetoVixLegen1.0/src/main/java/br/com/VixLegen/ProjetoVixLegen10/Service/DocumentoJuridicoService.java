@@ -20,15 +20,21 @@ public class DocumentoJuridicoService {
     private final DocumentoJuridicoRepository documentoRepository;
     private final ProcessoJuridicoRepository processoRepository;
     private final CategoriaDocumentoRepository categoriaRepository;
+    private final TenantAccessService tenant;
+    private final SanitizadorMinuta sanitizador;
 
     public DocumentoJuridicoService(
             DocumentoJuridicoRepository documentoRepository,
             ProcessoJuridicoRepository processoRepository,
-            CategoriaDocumentoRepository categoriaRepository) {
+            CategoriaDocumentoRepository categoriaRepository,
+            TenantAccessService tenant,
+            SanitizadorMinuta sanitizador) {
 
         this.documentoRepository = documentoRepository;
         this.processoRepository = processoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.tenant = tenant;
+        this.sanitizador = sanitizador;
     }
 
     public DocumentoJuridico cadastrar(
@@ -44,18 +50,19 @@ public class DocumentoJuridicoService {
     }
 
     public List<DocumentoJuridico> listarTodos() {
-        return documentoRepository.findAll();
+        return documentoRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId())
+                .stream().map(this::limparConteudo).toList();
     }
 
     public DocumentoJuridico buscarPorId(Long id) {
 
-        return documentoRepository
-                .findById(id)
+        return limparConteudo(documentoRepository
+                .findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Documento não encontrado"
                         )
-                );
+                ));
     }
 
     public DocumentoJuridico atualizar(
@@ -80,14 +87,10 @@ public class DocumentoJuridicoService {
     public List<DocumentoJuridico> listarPorProcesso(
             Long idProcesso) {
 
-        if (!processoRepository.existsById(idProcesso)) {
-            throw new RecursoNaoEncontradoException(
-                    "Processo jurídico não encontrado"
-            );
-        }
+        tenant.processo(idProcesso);
 
         return documentoRepository
-                .findByProcessoIdProcesso(idProcesso);
+                .findByProcessoIdProcesso(idProcesso).stream().map(this::limparConteudo).toList();
     }
 
     public DocumentoJuridico anexar(
@@ -118,18 +121,16 @@ public class DocumentoJuridicoService {
         return documentoRepository.save(documento);
     }
 
+    private DocumentoJuridico limparConteudo(DocumentoJuridico documento) {
+        documento.setConteudo(sanitizador.limpar(documento.getConteudo()));
+        return documento;
+    }
+
     private void aplicarDados(
             DocumentoJuridico documento,
             DocumentoJuridicoRequest request) {
 
-        ProcessoJuridico processo =
-                processoRepository.findById(
-                        request.getProcessoId()
-                ).orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"
-                        )
-                );
+        ProcessoJuridico processo = tenant.processo(request.getProcessoId());
 
         CategoriaDocumento categoria =
                 categoriaRepository.findById(
@@ -141,7 +142,7 @@ public class DocumentoJuridicoService {
                 );
 
         documento.setNome(request.getNome());
-        documento.setConteudo(request.getConteudo());
+        documento.setConteudo(sanitizador.limpar(request.getConteudo()));
         documento.setTipoArquivo(
                 request.getTipoArquivo() == null
                         ? "text/html"

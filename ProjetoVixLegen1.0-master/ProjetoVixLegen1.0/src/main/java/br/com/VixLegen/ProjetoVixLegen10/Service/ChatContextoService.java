@@ -65,7 +65,7 @@ public class ChatContextoService {
     }
 
     private String documento(Long id) {
-        DocumentoJuridico d = documentos.findById(id)
+        DocumentoJuridico d = documentos.findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Documento não encontrado"));
         tenant.processo(d.getProcesso().getIdProcesso());
         if (d.getConteudo() == null || d.getConteudo().isBlank()) {

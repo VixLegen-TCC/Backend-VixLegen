@@ -138,9 +138,8 @@ public class ProcessoJuridicoService {
             StatusProcesso status) {
 
         return classificacaoRepository
-                .findByStatus(status)
+                .findByStatusAndProcessoClienteEmpresaOrganizacaoIdEmpresa(status, tenant.empresaAtualId())
                 .stream()
-                .filter(c -> c.getProcesso().getCliente().getEmpresaOrganizacao() != null && c.getProcesso().getCliente().getEmpresaOrganizacao().getIdEmpresa().equals(tenant.empresaAtualId()))
                 .map(ClassificacaoProcesso::getProcesso)
                 .toList();
     }

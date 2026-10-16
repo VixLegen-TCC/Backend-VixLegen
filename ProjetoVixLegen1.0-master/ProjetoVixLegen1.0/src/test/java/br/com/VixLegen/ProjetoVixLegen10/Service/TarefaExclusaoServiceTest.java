@@ -28,7 +28,9 @@ class TarefaExclusaoServiceTest {
         Tarefa tarefa = new Tarefa();
         tarefa.setIdTarefa(10L);
         tarefa.setProcesso(processo);
-        when(tarefas.findById(10L)).thenReturn(Optional.of(tarefa));
+        when(tenant.empresaAtualId()).thenReturn(1L);
+        when(tarefas.findByIdTarefaAndProcessoClienteEmpresaOrganizacaoIdEmpresa(10L, 1L))
+                .thenReturn(Optional.of(tarefa));
         when(tenant.processo(20L)).thenReturn(processo);
 
         service.excluir(10L);
@@ -43,11 +45,14 @@ class TarefaExclusaoServiceTest {
         processo.setIdProcesso(99L);
         Tarefa tarefa = new Tarefa();
         tarefa.setProcesso(processo);
-        when(tarefas.findById(10L)).thenReturn(Optional.of(tarefa));
-        when(tenant.processo(99L)).thenThrow(new RecursoNaoEncontradoException("Processo não encontrado nesta organização"));
+        when(tenant.empresaAtualId()).thenReturn(1L);
+        // A consulta do próprio repositório já barra outra empresa.
+        when(tarefas.findByIdTarefaAndProcessoClienteEmpresaOrganizacaoIdEmpresa(10L, 1L))
+                .thenReturn(Optional.empty());
 
         assertThrows(RecursoNaoEncontradoException.class, () -> service.excluir(10L));
 
         verify(tarefas, never()).delete(any(Tarefa.class));
+        verify(tenant, never()).processo(anyLong());
     }
 }

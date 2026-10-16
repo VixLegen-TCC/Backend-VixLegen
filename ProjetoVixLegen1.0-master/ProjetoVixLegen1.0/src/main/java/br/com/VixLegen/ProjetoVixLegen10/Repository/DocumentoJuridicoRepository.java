@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DocumentoJuridicoRepository extends JpaRepository<DocumentoJuridico, Long> {
     List<DocumentoJuridico> findByProcessoIdProcesso(Long idProcesso);
+    List<DocumentoJuridico> findByProcessoClienteEmpresaOrganizacaoIdEmpresa(Long empresaId);
+    java.util.Optional<DocumentoJuridico> findByIdDocumentoAndProcessoClienteEmpresaOrganizacaoIdEmpresa(Long id, Long empresaId);
 }

@@ -179,6 +179,13 @@ public class SecurityConfig {
                         .hasAuthority("SCOPE_visualizar")
                         .requestMatchers("/notificacoes/**").hasRole("ADMIN")
 
+                        // Categorias são globais no esquema atual. Admin de um
+                        // escritório não deve alterar regras de todos os outros.
+                        // Reabilitar escrita somente após escopo organizacional.
+                        .requestMatchers(HttpMethod.POST, "/categorias/**", "/categorias-documento/**").denyAll()
+                        .requestMatchers(HttpMethod.PUT, "/categorias/**", "/categorias-documento/**").denyAll()
+                        .requestMatchers(HttpMethod.PATCH, "/categorias/**", "/categorias-documento/**").denyAll()
+                        .requestMatchers(HttpMethod.DELETE, "/categorias/**", "/categorias-documento/**").denyAll()
                         .requestMatchers(
                                 "/categorias/**"
                         ).hasRole("ADMIN")

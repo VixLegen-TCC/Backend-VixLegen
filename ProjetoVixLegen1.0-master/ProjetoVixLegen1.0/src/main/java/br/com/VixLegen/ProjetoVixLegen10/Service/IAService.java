@@ -15,37 +15,38 @@ public class IAService {
 
     private final IARepository analiseRepository;
     private final ProcessoJuridicoRepository processoRepository;
+    private final TenantAccessService tenant;
 
     public IAService(
             IARepository analiseRepository,
-            ProcessoJuridicoRepository processoRepository) {
+            ProcessoJuridicoRepository processoRepository,
+            TenantAccessService tenant) {
 
         this.analiseRepository = analiseRepository;
         this.processoRepository = processoRepository;
+        this.tenant = tenant;
     }
 
     // CREATE
     public IA cadastrar(IA analise) {
 
-        ProcessoJuridico processo = processoRepository.findById(
-                analise.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(analise.getProcesso().getIdProcesso());
 
         analise.setProcesso(processo);
+        analise.setIdAnalise(null); // POST não reutiliza ID fornecido pelo cliente.
 
         return analiseRepository.save(analise);
     }
 
     // READ
     public List<IA> listarTodos() {
-        return analiseRepository.findAll();
+        return analiseRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     // READ por ID
     public IA buscarPorId(Long id) {
 
-        return analiseRepository.findById(id)
+        return analiseRepository.findByIdAnaliseAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Análise de IA não encontrada"));
     }
@@ -55,14 +56,11 @@ public class IAService {
             Long id,
             IA analise) {
 
-        IA existente = analiseRepository.findById(id)
+        IA existente = analiseRepository.findByIdAnaliseAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Análise de IA não encontrada"));
 
-        ProcessoJuridico processo = processoRepository.findById(
-                analise.getProcesso().getIdProcesso()
-        ).orElseThrow(() ->
-                new RecursoNaoEncontradoException("Processo jurídico não encontrado"));
+        ProcessoJuridico processo = tenant.processo(analise.getProcesso().getIdProcesso());
 
         existente.setPrevisaoTempoJulgamento(
                 analise.getPrevisaoTempoJulgamento()
@@ -92,7 +90,7 @@ public class IAService {
     // DELETE
     public void excluir(Long id) {
 
-        IA analise = analiseRepository.findById(id)
+        IA analise = analiseRepository.findByIdAnaliseAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException("Análise de IA não encontrada"));
 

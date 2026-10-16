@@ -71,11 +71,11 @@ public class TarefaService {
     }
 
     public List<Tarefa> listarTodos() {
-        return tarefaRepository.findAll();
+        return tarefaRepository.findByProcessoClienteEmpresaOrganizacaoIdEmpresa(tenant.empresaAtualId());
     }
 
     public Tarefa buscarPorId(Long id) {
-        return tarefaRepository.findById(id)
+        return tarefaRepository.findByIdTarefaAndProcessoClienteEmpresaOrganizacaoIdEmpresa(id, tenant.empresaAtualId())
                 .orElseThrow(() ->
                         new RecursoNaoEncontradoException(
                                 "Tarefa não encontrada"
@@ -198,23 +198,13 @@ public class TarefaService {
     private ProcessoJuridico buscarProcesso(
             Long idProcesso) {
 
-        return processoRepository
-                .findById(idProcesso)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Processo jurídico não encontrado"
-                        ));
+        return tenant.processo(idProcesso);
     }
 
     private Usuario buscarUsuario(
             Long idUsuario) {
 
-        return usuarioRepository
-                .findById(idUsuario)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException(
-                                "Usuário responsável não encontrado"
-                        ));
+        return tenant.usuarioDaEmpresa(idUsuario);
     }
 
     private void validarPrazo(
