@@ -14,6 +14,11 @@ import java.time.LocalDate;
 @Setter
 public class Colaborador {
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_organizacao_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Empresa empresaOrganizacao;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idColaborador;
