@@ -36,7 +36,7 @@ class IsolamentoOrganizacaoTest {
     void documentosNaoPodemSerLidosNemExcluidosPorIdExterno() {
         DocumentoJuridicoRepository repo = mock(DocumentoJuridicoRepository.class);
         DocumentoJuridicoService svc = new DocumentoJuridicoService(repo,
-                mock(ProcessoJuridicoRepository.class), mock(CategoriaDocumentoRepository.class), tenant);
+                mock(ProcessoJuridicoRepository.class), mock(CategoriaDocumentoRepository.class), tenant, new SanitizadorMinuta());
         when(tenant.empresaAtualId()).thenReturn(empresa);
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.buscarPorId(901L));
         assertThrows(RecursoNaoEncontradoException.class, () -> svc.excluir(901L));
