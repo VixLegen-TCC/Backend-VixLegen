@@ -14,6 +14,14 @@ class CategoriaMapeamentoTest {
     @Test
     void nomesFisicosSaoExplicitos() throws NoSuchFieldException {
         assertEquals("categoria", Categoria.class.getAnnotation(Table.class).name());
+        assertEquals("usuarios", Usuario.class.getAnnotation(Table.class).name());
+        assertEquals("notificacao", Notificacao.class.getAnnotation(Table.class).name());
+        assertEquals("processos_juridicos", ProcessoJuridico.class.getAnnotation(Table.class).name());
+        assertEquals("categorias_documento", CategoriaDocumento.class.getAnnotation(Table.class).name());
+        assertEquals("documentos_juridicos", DocumentoJuridico.class.getAnnotation(Table.class).name());
+        assertEquals("partes_envolvidas", ParteEnvolvida.class.getAnnotation(Table.class).name());
+        assertEquals("movimentacao_processual", MovimentacaoProcessual.class.getAnnotation(Table.class).name());
+        assertEquals("ia", IA.class.getAnnotation(Table.class).name());
         conferirColuna("codigoCategoria", "codigo_categoria");
         conferirColuna("nivelAcesso", "nivel_acesso");
         conferirColuna("limiteProcessosSimultaneos", "limite_processos_simultaneos");
