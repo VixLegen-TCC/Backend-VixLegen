@@ -28,7 +28,7 @@ $env:JWT_AUDIENCE = "vixlegen-web"
 
 Use o **mesmo** `JWT_SECRET` em todos os reinícios do servidor, e guarde-o em gerenciador de segredos; regenerar invalida todas as sessões. No Linux/macOS, use exportações equivalentes. Alterar a chave antiga é necessário porque a fallback era pública no histórico Git. Não use a antiga novamente. Utilize HTTPS em rede externa.
 
-O campo `auth_version` foi adicionado ao modelo `usuarios` como coluna `Long` anulável, preservando cadastros anteriores: usuários antigos com NULL são tratados como versão 0. Desde o PR #19 (30/10/2026), o backend usa `ddl-auto=none`; todas as alterações no esquema exigem SQL/migration explícito. Planejar Flyway/Liquibase para controlar essas alterações.
+O campo `auth_version` foi adicionado ao modelo `usuarios` como coluna `Long` anulável, preservando cadastros anteriores: usuários antigos com NULL são tratados como versão 0. Migrations devem ser preparadas antes de substituir o `ddl-auto=update` atual.
 
 ## Rotas
 
@@ -62,6 +62,6 @@ O logout responde 204, e tokens anteriores retornam 401, inclusive em outros dis
 
 O limitador é **local à instância** e não protege tráfego distribuído nem todos os vetores de enumeração. Para produção, criar controle distribuído, métricas, proteção de cadastro público e autenticação HTTPS com cookies HttpOnly/Secure/SameSite e proteção CSRF (projeto atual usa Bearer token). O frontend passa a usar `sessionStorage`: isso reduz persistência em disco, mas **não impede roubo por XSS**.
 
-O backend já implementa consultas com escopo organizacional (ver `docs/isolamento-empresas.md`), mas é recomendável testar periodicamente acesso cruzado entre escritórios e autorização por objeto. Validação do JWT sozinha não substitui essas regras.
+Também restam revisões de autorização **por organização** em alguns Services; validação de JWT não substitui regras de acesso a cada recurso.
 
-O PR #19 foi integrado à `main` em 30/10/2026 e a suíte **Backend JWT Tests** passou no GitHub Actions com JDK 26 e MySQL descartável. Isso não substitui testes manuais de integração no banco e navegador da equipe. Ver [estado atual do projeto](estado-projeto-2026-10-30.md).
+Essas mudanças foram feitas numa branch para revisão. Executar `mvnw.cmd test` no JDK 26 e testes de integração com MySQL antes do merge: este ambiente não dispõe do toolchain e serviço MySQL necessários para validar a compilação completa.
