@@ -11,7 +11,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "movimentacaoProcessual")
+@Table(name = "movimentacao_processual")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
