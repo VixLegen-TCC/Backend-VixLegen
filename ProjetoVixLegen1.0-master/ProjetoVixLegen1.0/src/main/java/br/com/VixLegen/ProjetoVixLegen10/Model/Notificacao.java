@@ -22,12 +22,15 @@ public class Notificacao {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_notificacao")
     private Long idNotificacao;
 
     @NotBlank
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String mensagem;
 
     @NotNull
+    @Column(name = "data_envio", nullable = false)
     private LocalDateTime dataEnvio;
 
     @NotBlank

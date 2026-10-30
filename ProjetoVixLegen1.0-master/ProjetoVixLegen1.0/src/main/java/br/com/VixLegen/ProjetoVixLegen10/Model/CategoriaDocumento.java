@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "categoriasDocumento")
+@Table(name = "categorias_documento")
 @Getter
 @Setter
 public class CategoriaDocumento {

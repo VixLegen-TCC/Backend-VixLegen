@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "processosJuridicos")
+@Table(name = "processos_juridicos")
 @Getter
 @Setter
 public class ProcessoJuridico {

@@ -25,6 +25,9 @@ jobs:
       DB_USERNAME: root
       DB_PASSWORD: ci-only-password
       JWT_AUDIENCE: vixlegen-web
+      # Somente no MySQL descartavel criado para cada execucao do Actions.
+      # O application.properties da API continua com ddl-auto=none.
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
     defaults:
       run:
         working-directory: ProjetoVixLegen1.0-master/ProjetoVixLegen1.0
