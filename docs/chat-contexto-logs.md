@@ -17,6 +17,14 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/chat/contexto/proce
 curl -H "Authorization: Bearer $TOKEN" -F "arquivo=@teste.pdf" http://localhost:8080/chat/contexto/arquivo
 ```
 
+### Situação da IA da equipe (30/10/2026)
+
+Segundo informação da equipe, Raphael (PH) **já desenvolveu a IA em outra máquina**. Esse módulo externo não foi disponibilizado nesta revisão, portanto não há comprovação de linguagem, modelo, endpoints, dependências ou teste de resposta integrado. **Pendência atual: integrar e validar a IA externa**, não desenvolver uma nova IA do zero.
+
+O frontend em `integration.js` ainda apresenta uma resposta informativa fixa em vez de consumir um provedor de IA. O backend disponibiliza contexto autenticado de processo/documento/notificação e extração de PDF/TXT, mas **não** contém nesta versão um cliente integrado ao serviço do PH.
+
+**Contrato mínimo a definir com o PH:** modo de execução, endpoint e autenticação, entrada/saída estruturada, envio de contextos somente do escritório autorizado, política de retenção de documentos, limites, timeout/erro e testes com casos fictícios. Proteger segredos em variáveis de ambiente; não incluir dados de clientes reais em testes externos sem autorização.
+
 ### Próxima integração com RAG
 O frontend deve permitir selecionar uma fonte interna (tipo/id) ou anexar um arquivo. O serviço RAG deverá consumir o texto extraído **internamente pelo servidor**, após validar novamente o acesso, sem exigir download. Não retornar o texto integral para clientes sem necessidade. A API criada por enquanto expõe texto ao frontend e **não gera resposta de IA**, não faz vetorização e não persiste arquivos. Para documentos sigilosos, complementar autorização por profissional responsável/participante, e revisar a política de retenção e envio de dados ao fornecedor de IA antes de integrar.
 
