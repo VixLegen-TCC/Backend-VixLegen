@@ -62,6 +62,7 @@ public class Usuario {
     private Empresa empresaOrganizacao;
 
     @NotBlank
+    @Column(name = "numero_oab", nullable = false)
     private String numeroOAB;
 
     @NotNull
