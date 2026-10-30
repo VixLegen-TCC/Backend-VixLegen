@@ -34,6 +34,13 @@ class CategoriaMapeamentoTest {
         assertEquals("codigo_categoria", rel.referencedColumnName());
     }
 
+    @Test
+    void numeroOabUsaColunaExataDoSqlDeCadastro() throws NoSuchFieldException {
+        Column coluna = Usuario.class.getDeclaredField("numeroOAB").getAnnotation(Column.class);
+        assertNotNull(coluna, "Campo numeroOAB precisa de @Column explicito");
+        assertEquals("numero_oab", coluna.name());
+    }
+
     private void conferirColuna(String nomeCampo, String nomeBanco) throws NoSuchFieldException {
         Column column = Categoria.class.getDeclaredField(nomeCampo).getAnnotation(Column.class);
         assertNotNull(column, "Falta @Column para " + nomeCampo);
