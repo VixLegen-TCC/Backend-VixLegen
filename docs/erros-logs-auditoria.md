@@ -61,6 +61,6 @@ Na raiz Maven (`ProjetoVixLegen1.0-master/ProjetoVixLegen1.0`) com **JDK 26** co
 
 No Windows: `mvnw.cmd test`.
 
-O PR #19 foi integrado e a suíte do GitHub Actions passou com JDK 26 e MySQL temporário em 30/10/2026. O código atual usa `spring.jpa.show-sql=false` e `spring.jpa.hibernate.ddl-auto=none`. Na base local, continue coletando o `erroId` para diagnosticar possíveis incompatibilidades legadas de schema. Testes manuais no navegador e no banco real da equipe ainda são necessários.
+Nesta entrega os testes foram **escritos, mas não executados** no ambiente da assistência; faça o merge depois que a suíte passar. O projeto tem `spring.jpa.show-sql=true` no `application.properties`: recomendo desligar esse SQL em ambientes reais, especialmente com dados jurídicos, pois a saída SQL para console não usa a sanitização da nova auditoria.
 
-A autenticação/escopos e as permissões anteriores de exclusão permanecem intactos. Segundo a equipe, a IA foi desenvolvida separadamente por Raphael (PH); sua **integração** ao backend/frontend do VixLegen continua pendente. Veja [estado atual do projeto](estado-projeto-2026-10-30.md).
+A autenticação/escopos e as permissões anteriores de exclusão permanecem intactos. O módulo RAG continua planejado.
