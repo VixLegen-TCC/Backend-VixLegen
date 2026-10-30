@@ -22,21 +22,27 @@ public class Categoria {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "codigo_categoria")
     private Long codigoCategoria;
 
     @NotBlank
     private String descricao;
 
     @NotNull
+    @Column(name = "nivel_acesso")
     private Integer nivelAcesso;
 
     @NotNull
+    @Column(name = "limite_processos_simultaneos")
     private Integer limiteProcessosSimultaneos;
 
+    @Column(name = "permissao_visualizar")
     private boolean permissaoVisualizar;
 
+    @Column(name = "permissao_editar")
     private boolean permissaoEditar;
 
+    @Column(name = "permissao_excluir")
     private boolean permissaoExcluir;
 
     @OneToMany(mappedBy = "categoria")
