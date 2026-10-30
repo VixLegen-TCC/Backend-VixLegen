@@ -10,7 +10,7 @@ ser chave). Em `notificacao` aconteceu conflito semelhante.
 Além disso, o SQL legado usa `Usuario` e `Cliente`, enquanto as entidades
 atuais usam `usuarios` e `clientes` (nomes fisicamente distintos).
 
-## Alterações neste PR
+## Alterações integradas no PR #19 (30/10/2026)
 - `spring.jpa.hibernate.ddl-auto=none`: a aplicação NÃO altera mais
   o esquema por conta própria na inicialização.
 - Nomes de colunas explícitos em `Categoria` e ids/relacionamentos
@@ -31,7 +31,7 @@ atuais usam `usuarios` e `clientes` (nomes fisicamente distintos).
 5. Se a migração interromper com `SQLSTATE 45000`, há colunas conflitantes
    (ou ausentes). **Não force a execução**. Compare os dados e planeje migração
    específica; renomear/apagar às cegas pode causar perda de dados.
-6. Atualize seu clone (`git pull` depois da aprovação/merge), mantendo
+6. Atualize seu clone (`git pull` na `main`), mantendo
    `DB_USERNAME`, `DB_PASSWORD` e `JWT_SECRET` configurados.
 7. Reinicie a API e teste cadastro com **e-mail e CPF inéditos**.
    Resultado esperado: HTTP 201 em `POST /auth/cadastro`, seguido de
@@ -57,3 +57,25 @@ Criar migrations versionadas (Flyway/Liquibase), depois de consolidar um
 schema definitivo. Quando completamente reconciliado, trocar
 `ddl-auto=none` por `validate` para falhar cedo em vez de ter erro de SQL
 somente durante um endpoint.
+
+## Atualização após o merge — cadastro confirmado pela equipe (30/10/2026)
+
+O PR #19 foi integrado à `main`, e o GitHub Actions concluiu com sucesso após a correção da configuração de banco temporário nos testes. O erro posterior `Field 'numerooab' doesn't have a default value` revelou uma **coluna antiga obrigatória**, diferente de `numero_oab`, que já era preenchida pelo Java.
+
+**Correção no backend:** o campo `Usuario.numeroOAB` passou a usar explicitamente `@Column(name = "numero_oab", nullable = false)`, com teste de mapeamento.
+
+**Correção aplicada no MySQL local:** a equipe executou o reparo que permite `NULL` em `numerooab` somente quando existe também a coluna oficial `numero_oab` e confirmou que o cadastro voltou a funcionar. Esse reparo local **não prova** que outros ambientes tenham o mesmo schema e não substitui migration versionada.
+
+### Como conferir sem alterar tabelas
+
+1. Identifique o banco real da aplicação: `DB_NAME` (padrão `VixLegenDB`; alternativo `VixLegenDB_V2`).
+2. Faça backup e execute consultas de diagnóstico:
+   - `SELECT DATABASE();`
+   - `SHOW COLUMNS FROM usuarios LIKE 'numerooab';`
+   - `SHOW COLUMNS FROM usuarios LIKE 'numero_oab';`
+3. O backend escreve em `numero_oab`. A coluna legada `numerooab` não deve continuar `NOT NULL` sem default se não é preenchida pelos inserts.
+4. **Não exclua ou renomeie colunas automaticamente.** Verifique vínculos, valores antigos, FKs e faça backup antes de qualquer migração.
+
+**Configuração vigente:** `spring.jpa.hibernate.ddl-auto=none`. Só os testes de CI em banco descartável usam criação temporária de schema; isso não modifica a base real.
+
+Documentação consolidada: [estado do projeto](estado-projeto-2026-10-30.md).
