@@ -24,6 +24,7 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_usuario")
     private Long idUsuario;
 
     @NotBlank
@@ -89,7 +90,7 @@ public class Usuario {
     private String fotoPerfil;
 
     @ManyToOne
-    @JoinColumn(name = "categoria_id", nullable = false)
+    @JoinColumn(name = "categoria_id", referencedColumnName = "codigo_categoria", nullable = false)
     private Categoria categoria;
 
     @OneToMany(mappedBy = "usuarioResponsavel")
