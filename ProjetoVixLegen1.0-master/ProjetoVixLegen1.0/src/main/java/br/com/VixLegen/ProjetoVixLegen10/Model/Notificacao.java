@@ -26,6 +26,7 @@ public class Notificacao {
     private Long idNotificacao;
 
     @NotBlank
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String mensagem;
 
     @NotNull
