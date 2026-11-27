@@ -17,7 +17,7 @@ class ChatIAHistoricoServiceTest {
         rag=mock(RagHttpClient.class);tenant=mock(TenantAccessService.class);store=mock(ChatHistoricoStore.class);
         when(tenant.usuarioAtualId()).thenReturn(7L);when(tenant.empresaAtualId()).thenReturn(9L);
         when(store.donoConversa(id,dono)).thenReturn(Map.of("conversa_id",id.toString()));
-        service=new ChatIAService(rag,tenant,store);
+        service=new ChatIAService(rag,tenant,store,mock(ChatProcessoContextoService.class));
     }
     @Test void restauraSomenteHistoricoDoDonoESalva(){
         List<Map<String,Object>> h=List.of(Map.of("pergunta","Art. 5º","resposta","texto"));

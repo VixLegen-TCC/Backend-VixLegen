@@ -1,0 +1,17 @@
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\ApplicationTests.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Exception\ApiErroFactoryTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Exception\GlobalExceptionHandlerTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Model\CategoriaMapeamentoTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\AlertaPrazoServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\AuthServiceSecurityTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ChatContextoUploadTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ChatIAAnexoServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ChatIAHistoricoServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ChatIAProcessoServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ChatIAStreamingServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\IsolamentoBancoIntegracaoTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\IsolamentoOrganizacaoTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ProtecaoLoginServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\SanitizadorMinutaTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\TarefaExclusaoServiceTest.java
+C:\Users\USER\IdeaProjects\Backend-VixLegen\ProjetoVixLegen1.0-master\ProjetoVixLegen1.0\src\test\java\br\com\VixLegen\ProjetoVixLegen10\Service\ValidadorContaJwtTest.java
