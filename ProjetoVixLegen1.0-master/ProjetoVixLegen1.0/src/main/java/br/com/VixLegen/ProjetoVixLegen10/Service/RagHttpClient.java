@@ -18,6 +18,7 @@ import java.net.http.HttpTimeoutException;
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -54,6 +55,11 @@ public class RagHttpClient {
     public Map<String, Object> perguntar(UUID id, String mensagem) {
         return executar(() -> client.post().uri("/chat").contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("conversa_id", id.toString(), "mensagem", mensagem))
+                .retrieve().body(OBJETO));
+    }
+    public Map<String, Object> perguntarHistorico(UUID id, String mensagem, List<Map<String,Object>> historico) {
+        return executar(() -> client.post().uri("/chat/historico").contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("conversa_id",id.toString(),"mensagem",mensagem,"historico",historico))
                 .retrieve().body(OBJETO));
     }
     public Map<String, Object> resetar(UUID id) {
