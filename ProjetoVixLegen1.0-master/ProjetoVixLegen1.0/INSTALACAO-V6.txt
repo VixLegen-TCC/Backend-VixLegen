@@ -1,0 +1,4 @@
+Extraia nesta pasta: a mesma pasta que contém pom.xml e src.
+Aceite mesclar a pasta src.
+Os sete arquivos Java são idênticos aos do ZIP original V6.
+Recompile e reinicie o Spring Boot.

@@ -1,0 +1,6 @@
+Correção V6: força HTTP/1.1 no cliente Java do RAG.
+Extraia na mesma pasta do pom.xml, substituindo somente RagHttpClient.java.
+Pare e recompile o Spring Boot; mantenha Python e Ollama ativos.
+O reinício do Java perde o registro das sessões; crie uma nova sessão.
+Teste reproduzido com JDK 21 e Uvicorn/httptools: HTTP_2 retornou 422 (body ausente), HTTP_1_1 retornou 200.
+A compilação completa Spring Boot/Java 26 e o teste no Windows ainda precisam ser realizados.
